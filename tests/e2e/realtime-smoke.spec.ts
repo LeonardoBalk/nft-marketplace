@@ -2,7 +2,8 @@ import { expect, test } from '@playwright/test'
 
 test('a catalog change reaches the page through Socket.IO', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByText('1.19 ETH')).toBeVisible()
+  const emerald = page.locator('#catalogo a[href="/nft/emerald-ape-042"]')
+  await expect(emerald.getByText('1.19 ETH')).toBeVisible()
 
   const response = await page.evaluate(async () => {
     const request = await fetch('/api/demo/nfts/emerald-ape-042/price', {
@@ -14,5 +15,5 @@ test('a catalog change reaches the page through Socket.IO', async ({ page }) => 
   })
 
   expect(response).toBe(200)
-  await expect(page.getByText('1.29 ETH')).toBeVisible()
+  await expect(emerald.getByText('1.29 ETH')).toBeVisible()
 })
