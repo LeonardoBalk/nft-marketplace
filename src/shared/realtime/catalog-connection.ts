@@ -1,9 +1,9 @@
 import type { QueryClient } from '@tanstack/react-query'
 import { io } from 'socket.io-client'
 import type { NftUpdatedEvent } from '../../features/catalog/contracts'
-import { catalogKey } from '../../features/catalog/queries'
 
 export function connectCatalog(queryClient: QueryClient): () => void {
+  const latestVersions = new Map<string, number>()
   const socket = io(window.location.origin, {
     path: '/realtime/',
     transports: ['websocket'],
@@ -12,11 +12,14 @@ export function connectCatalog(queryClient: QueryClient): () => void {
 
   const onNftUpdated = (event: NftUpdatedEvent) => {
     if (!event.nftId || !Number.isInteger(event.version)) return
-    void queryClient.invalidateQueries({ queryKey: catalogKey })
+    if (event.version <= (latestVersions.get(event.nftId) ?? 0)) return
+    latestVersions.set(event.nftId, event.version)
+    void queryClient.invalidateQueries({ queryKey: ['nfts'] })
   }
 
   const onReconnect = () => {
-    void queryClient.invalidateQueries({ queryKey: catalogKey })
+    latestVersions.clear()
+    void queryClient.invalidateQueries({ queryKey: ['nfts'] })
   }
 
   socket.on('nft.updated', onNftUpdated)
