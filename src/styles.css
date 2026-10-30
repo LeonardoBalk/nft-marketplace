@@ -1,11 +1,67 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'Roboto Mono';
+  src: url('/fonts/RobotoMono-Variable.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: swap;
+}
+
 :root {
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  color: #f3e9db;
-  background: #160d0a;
+  font-family: 'Roboto Mono', ui-monospace, monospace;
+  color: #f5f1eb;
+  background: #140d0a;
 }
 
 body {
   margin: 0;
 }
+
+button, input, select { font: inherit; }
+
+.filter-button {
+  border: 0;
+  background: transparent;
+  color: #cfb28c;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 40px;
+  text-align: left;
+}
+
+.filter-button:hover, .filter-button[aria-pressed="true"] { color: #e89b55; }
+.filter-button:hover .filter-count, .filter-button[aria-pressed="true"] .filter-count { color: #e89b55; }
+.filter-button:focus-visible { outline: 2px solid #d99558; outline-offset: 3px; }
+
+.price-range {
+  appearance: none;
+  background: transparent;
+  pointer-events: none;
+  touch-action: none;
+}
+
+.price-range::-webkit-slider-runnable-track { height: 3px; background: transparent; }
+.price-range::-moz-range-track { height: 3px; background: transparent; }
+.price-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  margin-top: -6px;
+  border: 3px solid #140d0a;
+  border-radius: 999px;
+  background: #d28a4c;
+  pointer-events: auto;
+  cursor: grab;
+}
+.price-range::-moz-range-thumb {
+  width: 9px;
+  height: 9px;
+  border: 3px solid #140d0a;
+  border-radius: 999px;
+  background: #d28a4c;
+  pointer-events: auto;
+  cursor: grab;
+}
+.price-range:focus-visible { outline: 2px solid #f5f1eb; outline-offset: 3px; }
