@@ -6,6 +6,8 @@ export const catalogSearchSchema = z.object({
   network: z.enum(['', 'ethereum', 'polygon', 'solana']).catch('').default(''),
   minPrice: z.string().regex(/^(?:\d+(?:\.\d{1,18})?)?$/).catch('').default(''),
   maxPrice: z.string().regex(/^(?:\d+(?:\.\d{1,18})?)?$/).catch('').default(''),
+  // aba do catálogo: recorte da vitrine que combina com busca, filtros e ordenação
+  tab: z.enum(['', 'novos', 'em-alta']).catch('').default(''),
   sort: z.enum(['recent', 'price-asc', 'price-desc']).catch('recent').default('recent'),
   page: z.coerce.number().int().min(1).catch(1).default(1),
 })
@@ -19,6 +21,8 @@ export interface CatalogFacets {
   networks: Array<{ value: NftNetwork; label: string; count: number }>
 }
 
+export type NftRarity = 'COMUM' | 'RARO'
+
 export interface NftSummary {
   id: string
   name: string
@@ -31,6 +35,10 @@ export interface NftSummary {
   available: number
   edition: number
   version: number
+  rating: number
+  reviews: number
+  rarity: NftRarity
+  attributes: string[]
 }
 
 export interface NftPage {
@@ -42,8 +50,9 @@ export interface NftPage {
   facets: CatalogFacets
 }
 
-export interface NftUpdatedEvent {
-  eventId: string
-  nftId: string
-  version: number
-}
+export const nftUpdatedEventSchema = z.object({
+  eventId: z.string().min(1),
+  nftId: z.string().min(1),
+  version: z.number().int().min(1),
+})
+export type NftUpdatedEvent = z.infer<typeof nftUpdatedEventSchema>

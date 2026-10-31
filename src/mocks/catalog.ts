@@ -1,7 +1,10 @@
-import type { CatalogFacets, CatalogSearch, NftNetwork, NftPage, NftSummary } from '../features/catalog/contracts'
+import { z } from 'zod'
+import type { CatalogFacets, CatalogSearch, NftNetwork, NftPage, NftRarity, NftSummary } from '../features/catalog/contracts'
 import { ethToWei } from '../shared/money/eth'
 
-const initialNfts: NftSummary[] = [
+type NftSeed = Omit<NftSummary, 'rating' | 'reviews' | 'rarity' | 'attributes'>
+
+const initialNfts: NftSeed[] = [
   { id: 'emerald-ape-042', name: 'Emerald Ape #042', collection: 'Kurio Apes', category: 'Colecionáveis', network: 'ethereum', artwork: '/artwork/emerald-ape.webp', priceEth: '1.19', available: 50, edition: 100, version: 1 },
   { id: 'sage-nomad-009', name: 'Sage Nomad #009', collection: 'Kurio Apes', category: 'Arte digital', network: 'polygon', artwork: '/artwork/cosmic-bloom.webp', priceEth: '1.69', available: 12, edition: 50, version: 1 },
   { id: 'neon-vessel-552', name: 'Neon Vessel #552', collection: 'Kurio Apes', category: 'Arte 3D', network: 'solana', artwork: '/artwork/neon-vessel.webp', priceEth: '1.99', oldPriceEth: '2.29', available: 8, edition: 25, version: 1 },
@@ -26,6 +29,39 @@ const extraArtwork = [
   '/artwork/neon-vessel.webp',
   '/artwork/golden-beat.webp',
 ]
+// avaliação e traços das peças que aparecem nos frames; o resto é derivado
+const curatedTraits: Record<string, { rating: number; reviews: number; attributes: string[] }> = {
+  'emerald-ape-042': { rating: 4.8, reviews: 19, attributes: ['Óculos', 'Esmeralda'] },
+  'sage-nomad-009': { rating: 4.6, reviews: 32, attributes: ['Chapéu', 'Lavanda'] },
+  'neon-vessel-552': { rating: 4.9, reviews: 54, attributes: ['Neon', 'Vidro'] },
+  'cosmic-bloom-118': { rating: 4.5, reviews: 27, attributes: ['Flor', 'Nebulosa'] },
+  'violet-nomad-314': { rating: 4.4, reviews: 11, attributes: ['Capuz', 'Violeta'] },
+  'ivory-baron-088': { rating: 4.7, reviews: 63, attributes: ['Terno', 'Marfim'] },
+  'golden-beat-207': { rating: 4.3, reviews: 48, attributes: ['Fones', 'Ouro'] },
+}
+const attributePool = ['Corrente', 'Jaqueta', 'Névoa', 'Âmbar', 'Holograma', 'Vinil', 'Cristal', 'Fumaça']
+// só a menor tiragem é rara, como no frame (neon vessel sim, sage nomad não); o selo sai do dado
+const rareEditionLimit = 25
+
+function seedOf(id: string): number {
+  let hash = 0
+  for (const char of id) hash = (hash * 31 + char.charCodeAt(0)) >>> 0
+  return hash
+}
+
+function decorate(seed: NftSeed): NftSummary {
+  const hash = seedOf(seed.id)
+  const rarity: NftRarity = seed.edition <= rareEditionLimit ? 'RARO' : 'COMUM'
+  const curated = curatedTraits[seed.id]
+  const traits = curated?.attributes ?? [attributePool[hash % attributePool.length], attributePool[(hash >> 4) % attributePool.length]]
+  return {
+    ...seed,
+    rating: curated?.rating ?? Number((4 + (hash % 11) / 10).toFixed(1)),
+    reviews: curated?.reviews ?? 5 + (hash % 195),
+    rarity,
+    attributes: [...new Set([...traits, rarity === 'COMUM' ? 'Clássico' : 'Raro'])],
+  }
+}
 const categoryCounts = [
   { name: 'Arte digital', count: 33 },
   { name: 'Fotografia', count: 12 },
@@ -53,17 +89,20 @@ const unlistedCategoryItems = Array.from({ length: 44 }, () => 'Outros')
 const remainingNetworks = networkCounts.flatMap(({ value, count }) =>
   Array.from({ length: count - (initialNetworkCounts.get(value) ?? 0) }, () => value),
 )
+// as duas listas saem em blocos; ler as redes com passo primo que não divide o total espalha
+// cada coleção pelas três redes sem mudar quantas peças cada rede tem
+const networkStride = [7, 11, 13, 17, 19, 23].find((step) => remainingNetworks.length % step !== 0) ?? 1
 const extraNames = ['Aurora', 'Orbit', 'Velvet', 'Pixel', 'Nova', 'Echo']
 const extraPrices = ['0.59', '0.79', '0.89', '1.09', '1.29', '1.49', '1.69', '1.89']
 const generatedCategories = [...remainingCategories, ...unlistedCategoryItems]
-const generatedNfts: NftSummary[] = generatedCategories.map((category, index) => {
+const generatedNfts: NftSeed[] = generatedCategories.map((category, index) => {
   const number = String(554 + index).padStart(3, '0')
   return {
     id: `kurio-edition-${number}`,
     name: `${extraNames[index % extraNames.length]} ${['Muse', 'Signal', 'Dream', 'Echo'][index % 4]} #${number}`,
     collection: `${['Kurio', 'Studio', 'Genesis'][index % 3]} Editions`,
     category,
-    network: remainingNetworks[index],
+    network: remainingNetworks[(index * networkStride) % remainingNetworks.length],
     artwork: extraArtwork[index % extraArtwork.length],
     priceEth: extraPrices[index % extraPrices.length],
     available: 5 + (index % 41),
@@ -72,8 +111,43 @@ const generatedNfts: NftSummary[] = generatedCategories.map((category, index) =>
   }
 })
 
-const nfts = [...initialNfts, ...generatedNfts].map((nft) => ({ ...nft }))
+const nfts: NftSummary[] = [...initialNfts, ...generatedNfts].map(decorate)
+const catalogStoreKey = 'kurio.demo.catalog.v1'
+const savedCatalogSchema = z.record(z.string(), z.object({
+  priceEth: z.string().regex(/^\d+(?:\.\d{1,18})?$/),
+  available: z.number().int().min(0),
+  version: z.number().int().min(1),
+}))
+
+try {
+  const raw = localStorage.getItem(catalogStoreKey)
+  const saved = raw ? savedCatalogSchema.safeParse(JSON.parse(raw)) : null
+  if (saved?.success) {
+    for (const nft of nfts) {
+      const state = saved.data[nft.id]
+      if (state) Object.assign(nft, state)
+    }
+  }
+} catch {
+  localStorage.removeItem(catalogStoreKey)
+}
+
+function persistCatalog(): void {
+  localStorage.setItem(catalogStoreKey, JSON.stringify(Object.fromEntries(nfts.map(({ id, priceEth, available, version }) => [id, { priceEth, available, version }]))))
+}
 const pageSize = 9
+
+// a ordem do array já é a de listagem (é o que "listados recentemente" mostra): uma peça por dia
+const newReleaseWindowDays = 21
+const listedDaysAgo = new Map(nfts.map((nft, index) => [nft.id, index]))
+// procura derivada de avaliações e do id: estável entre recargas, sem sorteio
+const trendingCount = 27
+const trendingIds = new Set(
+  [...nfts]
+    .sort((a, b) => (b.reviews * 3 + (seedOf(b.id) % 40)) - (a.reviews * 3 + (seedOf(a.id) % 40)))
+    .slice(0, trendingCount)
+    .map((nft) => nft.id),
+)
 const catalogFacets: CatalogFacets = {
   categories: categoryCounts.map(({ name }) => ({
     name,
@@ -90,10 +164,12 @@ export function listNfts(search: CatalogSearch): NftPage {
   const query = search.q.toLocaleLowerCase('pt-BR')
   const filtered = nfts.filter((nft) =>
     (!query || `${nft.name} ${nft.collection}`.toLocaleLowerCase('pt-BR').includes(query)) &&
-    (!search.category || nft.category === search.category) &&
+    (!search.category || search.category.split(',').includes(nft.category)) &&
     (!search.network || nft.network === search.network) &&
     (!search.minPrice || ethToWei(nft.priceEth) >= ethToWei(search.minPrice)) &&
-    (!search.maxPrice || ethToWei(nft.priceEth) <= ethToWei(search.maxPrice)),
+    (!search.maxPrice || ethToWei(nft.priceEth) <= ethToWei(search.maxPrice)) &&
+    (search.tab !== 'novos' || (listedDaysAgo.get(nft.id) ?? Infinity) < newReleaseWindowDays) &&
+    (search.tab !== 'em-alta' || trendingIds.has(nft.id)),
   )
 
   if (search.sort === 'price-asc') filtered.sort((a, b) => ethToWei(a.priceEth) < ethToWei(b.priceEth) ? -1 : ethToWei(a.priceEth) > ethToWei(b.priceEth) ? 1 : 0)
@@ -131,5 +207,6 @@ export function changeNftPrice(nftId: string, priceEth: string): NftSummary | nu
   if (!nft) return null
   nft.priceEth = priceEth
   nft.version += 1
+  persistCatalog()
   return { ...nft }
 }
