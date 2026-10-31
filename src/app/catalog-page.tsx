@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link, useNavigate, useSearch } from '@tanstack/react-router'
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { NftCard, NftCardSkeleton } from '../features/catalog/nft-card'
 import { catalogQuery } from '../features/catalog/queries'
+import { catalogSearchSchema } from '../features/catalog/contracts'
 import { ethToWei } from '../shared/money/eth'
 import { HomeSections } from './home-sections'
 
@@ -21,8 +22,9 @@ const sortOptions = [
 ] as const
 
 export function CatalogPage() {
-  const search = useSearch({ from: '/' })
-  const navigate = useNavigate({ from: '/' })
+  const locationSearch = useRouterState({ select: (state) => state.location.search })
+  const search = catalogSearchSchema.parse(locationSearch)
+  const navigate = useNavigate()
   const catalog = useQuery(catalogQuery(search))
   const catalogItems = Array.isArray(catalog.data?.items) ? catalog.data.items : []
   const pageCount = catalog.data?.pageCount ?? 0
@@ -210,7 +212,7 @@ export function CatalogPage() {
               {catalog.data && !catalogPayloadInvalid && catalogItems.length > 0 && <ul className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-[34px] lg:gap-y-[72px]">{catalogItems.map((nft, index) => <NftCard nft={nft} featuredRow={index < 3} key={nft.id} />)}</ul>}
             </div>
             </div>
-            {catalog.data && !catalogPayloadInvalid && catalogItems.length > 0 && <nav aria-label="Paginação do catálogo" className="mt-10 flex items-center justify-end gap-2 lg:mt-0">
+            {catalog.data && !catalogPayloadInvalid && catalogItems.length > 0 && pageCount > 1 && <nav aria-label="Paginação do catálogo" className="mt-10 flex items-center justify-end gap-2 lg:mt-0">
               {search.page > 1 && <Button variant="ghost" size="icon" aria-label="Página anterior" onClick={() => setSearch({ page: search.page - 1 })} className="size-[35px] rounded-[4px] border border-[#3f2319] bg-transparent p-0 text-[#f5f1eb] hover:border-[#d28a4c] hover:bg-[#241612] hover:text-[#e89b55]"><ChevronLeft size={18} strokeWidth={1.5} /></Button>}
               {Array.from({ length: Math.min(4, pageCount) }, (_, index) => {
                 const page = firstVisiblePage + index

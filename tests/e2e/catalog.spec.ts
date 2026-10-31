@@ -22,24 +22,25 @@ test('busca e filtros combinados sobrevivem a refresh e histórico', async ({ pa
 
 test('ordenação e paginação mudam a consulta', async ({ page }) => {
   await page.goto('/')
-  await page.getByLabel('Ordenar por').selectOption('price-asc')
+  await page.getByRole('combobox', { name: /Ordenar por/ }).click()
+  await page.getByRole('option', { name: 'Menor preço' }).click()
   await expect(page).toHaveURL(/sort=price-asc/)
   await expect(page.locator('#catalogo li').first()).toContainText('Golden Signal #160')
   await page.getByRole('button', { name: 'Próxima página' }).click()
   await expect(page).toHaveURL(/page=2/)
-  await expect(page.locator('#catalogo li')).toHaveCount(3)
+  await expect(page.locator('#catalogo li')).toHaveCount(9)
 })
 
 test('faixa de preço filtra sem perder precisão decimal', async ({ page }) => {
   await page.goto('/')
-  await page.getByLabel('Preço mínimo em ETH').fill('1.50')
-  await page.getByLabel('Preço máximo em ETH').fill('2.00')
+  await page.getByLabel('Preço mínimo em ETH').fill('1.5')
+  await page.getByLabel('Preço máximo em ETH').fill('2')
   await page.getByRole('button', { name: 'Aplicar' }).click()
-  await expect(page).toHaveURL(/minPrice=/)
-  await expect(page.locator('#catalogo li')).toHaveCount(3)
+  await expect(page).toHaveURL(/minPrice=%221\.50%22&maxPrice=%222\.00%22/)
+  await expect(page.locator('#catalogo li')).toHaveCount(9)
   await expect(page.locator('#catalogo').getByText('Emerald Ape #042')).toHaveCount(0)
   await page.reload()
-  await expect(page.locator('#catalogo li')).toHaveCount(3)
+  await expect(page.locator('#catalogo li')).toHaveCount(9)
 })
 
 test('detalhe abre diretamente e NFT inexistente mostra erro', async ({ page }) => {

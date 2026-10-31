@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import { Skeleton } from '@/components/ui/skeleton'
 import type { NftSummary } from './contracts'
 
 export function NftCard({ nft, featuredRow = false }: { nft: NftSummary; featuredRow?: boolean }) {
@@ -19,12 +20,12 @@ export function NftCard({ nft, featuredRow = false }: { nft: NftSummary; feature
 
 export function NftCardSkeleton() {
   return (
-    <li className="min-w-0 max-w-[258px] animate-pulse motion-reduce:animate-none" aria-hidden="true">
+    <li className="min-w-0 max-w-[258px]" aria-hidden="true">
       <div className="flex h-[300px] w-full flex-row items-start gap-[10px] bg-[#241612] px-1 pb-7 pt-6">
-        <div className="aspect-square w-full max-w-[250px] rounded-[15px] bg-[#38251e]" />
+        <Skeleton className="aspect-square w-full max-w-[250px] rounded-[15px]" />
       </div>
-      <div className="mt-3 h-4 w-3/4 rounded bg-[#38251e]" />
-      <div className="mt-3 h-4 w-1/3 rounded bg-[#38251e]" />
+      <Skeleton className="mt-3 h-4 w-3/4" />
+      <Skeleton className="mt-3 h-4 w-1/3" />
     </li>
   )
 }
