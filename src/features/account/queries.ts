@@ -59,7 +59,7 @@ export function useUpdateAvatar() {
       const response = await api.put<CollectorProfile>('/profile/avatar', { avatarUrl })
       return response.data
     },
-    // Atualização otimista: o avatar aparece na hora e volta ao anterior se a API recusar.
+    // otimista: o avatar aparece na hora e volta ao anterior se a api recusar
     onMutate: async (avatarUrl) => {
       await queryClient.cancelQueries({ queryKey: profileKey })
       const previous = queryClient.getQueryData<CollectorProfile>(profileKey)

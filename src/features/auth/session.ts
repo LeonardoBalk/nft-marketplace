@@ -13,7 +13,7 @@ export function setAccessToken(token: string): void {
   try {
     localStorage.setItem(tokenStorageKey, token)
   } catch {
-    // keep the active session
+    // seguir com a sessão ativa
   }
 }
 
@@ -21,7 +21,7 @@ export function clearAccessToken(): void {
   try {
     localStorage.removeItem(tokenStorageKey)
   } catch {
-    // finish logout without storage
+    // concluir o logout sem storage
   }
 }
 

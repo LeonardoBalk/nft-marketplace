@@ -52,7 +52,7 @@ export function readProfile(user: AuthUser): CollectorProfile {
   const store = loadStore()
   const stored = store.profiles[user.id]
   if (stored) return stored
-  // O perfil nasce preenchido com o que a conta já conhece.
+  // o perfil nasce preenchido com o que a conta já conhece
   return {
     displayName: user.name,
     username: user.email.split('@')[0],

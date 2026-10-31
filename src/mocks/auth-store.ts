@@ -79,7 +79,7 @@ async function initializeDatabase(): Promise<Database> {
       if (parsed.success) return migrateDemoAccounts(parsed.data)
     }
   } catch {
-    // rebuild the mock state
+    // reconstruir o estado simulado
   }
 
   const users: StoredUser[] = await Promise.all(demoAccounts.map(async (account) => ({
@@ -103,7 +103,7 @@ async function getDatabase(): Promise<Database> {
     const parsed = stored ? databaseSchema.safeParse(JSON.parse(stored)) : null
     if (parsed?.success) return migrateDemoAccounts(parsed.data)
   } catch {
-    // use the in memory state
+    // usar o estado em memória
   }
   return database
 }

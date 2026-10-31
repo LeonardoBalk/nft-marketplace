@@ -5,8 +5,7 @@ import { useLogout } from '../features/auth/queries'
 
 const itemClass = 'flex h-[45px] items-center gap-3 px-4 text-[15px] leading-[45px] transition-colors'
 
-// Atividade, lista de interesse, ofertas, downloads e suporte estão fora do escopo da entrega:
-// aparecem para preservar o desenho, sem fingir que funcionam.
+// fora do escopo: aparecem para preservar o desenho, sem fingir que funcionam
 const pendingItems = [
   { label: 'Atividade', icon: ShoppingBag },
   { label: 'Lista de interesse', icon: Heart },

@@ -14,7 +14,7 @@ async function signUp(page: import('@playwright/test').Page, email: string) {
 
 test('perfil exige sessão, salva dados e valida a troca de senha', async ({ page }) => {
   await page.goto('/perfil')
-  // Visitante não vê os dados: o modal abre sozinho com retorno para /perfil.
+  // visitante não vê os dados: o modal abre sozinho com retorno para /perfil
   await signUp(page, 'perfil-e2e@example.com')
 
   await expect(page.getByRole('heading', { name: 'Perfil do colecionador' })).toBeVisible()
