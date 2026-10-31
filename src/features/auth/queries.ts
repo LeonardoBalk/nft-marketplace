@@ -4,6 +4,7 @@ import { registerRequestSchema } from './contracts'
 import type { AuthSessionResponse, AuthUser, LoginInput, RegisterInput } from './contracts'
 import { clearAccessToken, setAccessToken } from './session'
 import { cartKey, mergeGuestCart } from '../cart/queries'
+import { favoritesKey } from '../favorites/queries'
 
 export const authKeys = {
   session: ['auth', 'session'] as const,
@@ -12,6 +13,7 @@ export const authKeys = {
 async function establishSession(path: '/auth/login' | '/auth/register', payload: LoginInput | Omit<RegisterInput, 'confirmPassword'>) {
   const { data } = await api.post<AuthSessionResponse>(path, payload)
   setAccessToken(data.accessToken)
+  window.dispatchEvent(new Event('kurio:session-restored'))
   // manter carrinho de visitante apos autenticacao
   await mergeGuestCart()
   return data.user
@@ -36,6 +38,7 @@ export function useLogin() {
     onSuccess: (user) => {
       queryClient.setQueryData(authKeys.session, user)
       void queryClient.invalidateQueries({ queryKey: cartKey })
+      void queryClient.invalidateQueries({ queryKey: favoritesKey })
     },
   })
 }
@@ -48,6 +51,7 @@ export function useRegister() {
     onSuccess: (user) => {
       queryClient.setQueryData(authKeys.session, user)
       void queryClient.invalidateQueries({ queryKey: cartKey })
+      void queryClient.invalidateQueries({ queryKey: favoritesKey })
     },
   })
 }
@@ -62,9 +66,11 @@ export function useLogout() {
         clearAccessToken()
       }
     },
-    onSettled: () => {
-      queryClient.clear()
+    // sessão nula primeiro: clear() tiraria a consulta de baixo de quem está na tela e o header seguiria logado
+    onSettled: async () => {
       queryClient.setQueryData(authKeys.session, null)
+      // o resto era da conta que saiu: volta ao zero e o que está na tela refaz a busca como visitante
+      await queryClient.resetQueries({ predicate: (query) => query.queryKey[0] !== authKeys.session[0] })
     },
   })
 }
