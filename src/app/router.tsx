@@ -3,6 +3,8 @@ import { useCallback, useMemo, useState } from 'react'
 import { CatalogPage } from './catalog-page'
 import { NftDetailPage } from './nft-detail-page'
 import { CartPage } from './cart-page'
+import { ProfilePage } from './profile-page'
+import { WalletsPage } from './wallets-page'
 import { CheckoutPage } from './checkout-page'
 import { SiteHeader } from './site-header'
 import { AuthPage } from './auth-page'
@@ -46,13 +48,25 @@ const cartRoute = createRoute({
   component: CartPage,
 })
 
+const profileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/perfil',
+  component: ProfilePage,
+})
+
+const walletsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/carteiras',
+  component: WalletsPage,
+})
+
 const checkoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/checkout',
   component: CheckoutPage,
 })
 
-export const router = createRouter({ routeTree: rootRoute.addChildren([catalogRoute, nftDetailRoute, cartRoute, checkoutRoute]) })
+export const router = createRouter({ routeTree: rootRoute.addChildren([catalogRoute, nftDetailRoute, cartRoute, checkoutRoute, profileRoute, walletsRoute]) })
 
 declare module '@tanstack/react-router' {
   interface Register {

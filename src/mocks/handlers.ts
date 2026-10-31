@@ -1,7 +1,9 @@
 import { http, HttpResponse, ws } from 'msw'
 import { toSocketIo } from '@mswjs/socket.io-binding'
 import { loginSchema, registerRequestSchema } from '../features/auth/contracts'
-import { authenticateMockRequest, deleteMockSession, loginMockUser, registerMockUser } from './auth-store'
+import { authenticateMockRequest, changeMockPassword, deleteMockSession, loginMockUser, registerMockUser, updateMockUser } from './auth-store'
+import { avatarSchema, passwordChangeSchema, profileSchema, walletSchema } from '../features/account/contracts'
+import { deleteWallet, readProfile, readWallets, writeAvatar, writeProfile, writeWallet } from './account-store'
 import { catalogSearchSchema } from '../features/catalog/contracts'
 import { cartItemRequestSchema, cartQuantitySchema, checkoutSchema, couponRequestSchema, type CartSummary } from '../features/cart/contracts'
 import { addCartItem, applyCartCoupon, checkoutCart, mergeGuestCart, readCart, removeCartCoupon, removeCartItem, resolveCartOwner, updateCartItem } from './commerce-store'
@@ -42,6 +44,58 @@ export const handlers = [
     const token = request.headers.get('authorization')?.match(/^Bearer\s+(.+)$/i)?.[1] ?? null
     await deleteMockSession(token)
     return new HttpResponse(null, { status: 204 })
+  }),
+  http.get('/api/profile', async ({ request }) => {
+    const user = await authenticateMockRequest(request)
+    if (!user) return HttpResponse.json({ code: 'SESSION_INVALID', message: 'Sua sessão expirou.' }, { status: 401 })
+    return HttpResponse.json(readProfile(user))
+  }),
+  http.patch('/api/profile', async ({ request }) => {
+    const user = await authenticateMockRequest(request)
+    if (!user) return HttpResponse.json({ code: 'SESSION_INVALID', message: 'Sua sessão expirou.' }, { status: 401 })
+    const parsed = profileSchema.safeParse(await request.json().catch(() => null))
+    if (!parsed.success) return HttpResponse.json({ code: 'VALIDATION_ERROR', message: 'Confira os dados do perfil.' }, { status: 422 })
+    const updated = await updateMockUser(user.id, { name: parsed.data.displayName, email: parsed.data.email })
+    if (updated === 'EMAIL_CONFLICT') return HttpResponse.json({ code: 'EMAIL_CONFLICT', message: 'Já existe uma conta com este e-mail.' }, { status: 409 })
+    return HttpResponse.json(writeProfile(user, parsed.data))
+  }),
+  http.put('/api/profile/avatar', async ({ request }) => {
+    const user = await authenticateMockRequest(request)
+    if (!user) return HttpResponse.json({ code: 'SESSION_INVALID', message: 'Sua sessão expirou.' }, { status: 401 })
+    const parsed = avatarSchema.safeParse(await request.json().catch(() => null))
+    if (!parsed.success) return HttpResponse.json({ code: 'VALIDATION_ERROR', message: 'Imagem inválida.' }, { status: 422 })
+    await updateMockUser(user.id, { avatarUrl: parsed.data.avatarUrl })
+    return HttpResponse.json(writeAvatar(user, parsed.data.avatarUrl))
+  }),
+  http.post('/api/profile/password', async ({ request }) => {
+    const user = await authenticateMockRequest(request)
+    if (!user) return HttpResponse.json({ code: 'SESSION_INVALID', message: 'Sua sessão expirou.' }, { status: 401 })
+    const parsed = passwordChangeSchema.safeParse(await request.json().catch(() => null))
+    if (!parsed.success) return HttpResponse.json({ code: 'VALIDATION_ERROR', message: 'Confira as senhas informadas.' }, { status: 422 })
+    const result = await changeMockPassword(user.id, parsed.data.currentPassword, parsed.data.newPassword)
+    if (result === 'INVALID_PASSWORD') return HttpResponse.json({ code: 'INVALID_PASSWORD', message: 'A senha atual não confere.' }, { status: 422 })
+    return new HttpResponse(null, { status: 204 })
+  }),
+  http.get('/api/wallets', async ({ request }) => {
+    const user = await authenticateMockRequest(request)
+    if (!user) return HttpResponse.json({ code: 'SESSION_INVALID', message: 'Sua sessão expirou.' }, { status: 401 })
+    return HttpResponse.json(readWallets(user))
+  }),
+  http.put('/api/wallets/:slot', async ({ params, request }) => {
+    const user = await authenticateMockRequest(request)
+    if (!user) return HttpResponse.json({ code: 'SESSION_INVALID', message: 'Sua sessão expirou.' }, { status: 401 })
+    const slot = String(params.slot)
+    if (slot !== 'primary' && slot !== 'secondary') return HttpResponse.json({ code: 'WALLET_SLOT_INVALID', message: 'Carteira inválida.' }, { status: 404 })
+    const parsed = walletSchema.safeParse(await request.json().catch(() => null))
+    if (!parsed.success) return HttpResponse.json({ code: 'VALIDATION_ERROR', message: 'Confira os dados da carteira.' }, { status: 422 })
+    return HttpResponse.json(writeWallet(user, slot, parsed.data))
+  }),
+  http.delete('/api/wallets/:slot', async ({ params, request }) => {
+    const user = await authenticateMockRequest(request)
+    if (!user) return HttpResponse.json({ code: 'SESSION_INVALID', message: 'Sua sessão expirou.' }, { status: 401 })
+    const slot = String(params.slot)
+    if (slot !== 'primary' && slot !== 'secondary') return HttpResponse.json({ code: 'WALLET_SLOT_INVALID', message: 'Carteira inválida.' }, { status: 404 })
+    return HttpResponse.json(deleteWallet(user, slot))
   }),
   http.get('/api/cart', async ({ request }) => {
     const owner = resolveCartOwner(await authenticateMockRequest(request), request)

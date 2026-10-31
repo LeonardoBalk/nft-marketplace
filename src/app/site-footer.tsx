@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Button } from '../components/ui/button'
 
@@ -43,11 +44,11 @@ export function SiteFooter() {
   <div className="flex flex-col gap-8 bg-[#241612] px-8 py-8 sm:grid sm:grid-cols-2 lg:flex lg:h-[236px] lg:flex-row lg:items-start lg:justify-between">
     <div className="flex flex-col gap-2 lg:w-[178.67px]">
       <h2 className="text-lg font-bold leading-4">Meu perfil</h2>
-      <ul className="text-sm leading-[30px]"><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Meu perfil</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Minha coleção</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Atividade</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Estúdio do criador</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Lista de interesse</li></ul>
+      <ul className="text-sm leading-[30px]"><li><Link to="/perfil" className="transition-colors hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-[#d28a4c]">Meu perfil</Link></li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Minha coleção</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Atividade</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Estúdio do criador</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Lista de interesse</li></ul>
     </div>
     <div className="flex flex-col gap-2 lg:w-[178.67px]">
       <h2 className="text-lg font-bold leading-4">Central de ajuda</h2>
-      <ul className="text-sm leading-[30px]"><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Central de ajuda</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Como comprar NFTs</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Carteira e segurança</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Política do mercado</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Denunciar item</li></ul>
+      <ul className="text-sm leading-[30px]"><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Central de ajuda</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Como comprar NFTs</li><li><Link to="/carteiras" className="transition-colors hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-[#d28a4c]">Carteira e segurança</Link></li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Política do mercado</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Denunciar item</li></ul>
     </div>
     <div className="flex flex-col gap-2 lg:w-[178.67px]">
       <h2 className="text-lg font-bold leading-4">Coleções</h2>
