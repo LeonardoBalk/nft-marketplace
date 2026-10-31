@@ -3,10 +3,10 @@ import { expect, test } from '@playwright/test'
 test('carrinho altera quantidade, remove item e sobrevive ao refresh', async ({ page }) => {
   await page.goto('/nft/emerald-ape-042')
   await page.getByRole('button', { name: 'COMPRAR' }).click()
-  await expect(page.getByText('adicionado ao carrinho.')).toBeVisible()
+  await expect(page).toHaveURL(/\/carrinho$/)
   await page.goto('/nft/violet-nomad-314')
   await page.getByRole('button', { name: 'COMPRAR' }).click()
-  await expect(page.getByText('adicionado ao carrinho.')).toBeVisible()
+  await expect(page).toHaveURL(/\/carrinho$/)
 
   await page.goto('/carrinho')
   await expect(page.getByRole('link', { name: 'Emerald Ape #042' })).toBeVisible()
@@ -32,7 +32,7 @@ test('carrinho altera quantidade, remove item e sobrevive ao refresh', async ({ 
 test('cupom expirado e inválido são tratados no carrinho', async ({ page }) => {
   await page.goto('/nft/golden-beat-207')
   await page.getByRole('button', { name: 'COMPRAR' }).click()
-  await expect(page.getByText('adicionado ao carrinho.')).toBeVisible()
+  await expect(page).toHaveURL(/\/carrinho$/)
   await page.goto('/carrinho')
 
   await page.getByLabel('Código promocional').fill('EXPIRADO')
@@ -48,7 +48,7 @@ test('cupom expirado e inválido são tratados no carrinho', async ({ page }) =>
 test('conectar e finalizar pede login quando o visitante não tem sessão', async ({ page }) => {
   await page.goto('/nft/cosmic-bloom-118')
   await page.getByRole('button', { name: 'COMPRAR' }).click()
-  await expect(page.getByText('adicionado ao carrinho.')).toBeVisible()
+  await expect(page).toHaveURL(/\/carrinho$/)
   await page.goto('/carrinho')
 
   await page.getByRole('button', { name: 'Conectar e finalizar' }).click()
@@ -60,4 +60,70 @@ test('conectar e finalizar pede login quando o visitante não tem sessão', asyn
   await expect(dialog).toBeHidden()
   await expect(page).toHaveURL(/\/carrinho$/)
   await expect(page.locator('header a[href="/carrinho"]')).toHaveText('1')
+})
+
+test.describe('carrinho no mobile', () => {
+  test.use({ viewport: { width: 390, height: 844 } })
+
+  test('cards do frame: menos desabilitado em 1, mais soma, lixeira remove e finalizar pede login', async ({ page }) => {
+    await page.goto('/nft/emerald-ape-042')
+    await page.getByRole('button', { name: 'Adicionar ao carrinho' }).click()
+    await expect(page.getByText('adicionado ao carrinho.')).toBeVisible()
+    await expect(page).toHaveURL(/\/nft\/emerald-ape-042$/)
+    await page.goto('/carrinho')
+
+    await expect(page.getByRole('heading', { name: 'Carrinho de NFTs' })).toBeVisible()
+    await expect(page.getByRole('navigation', { name: 'Navegação' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Diminuir quantidade de Emerald Ape #042' })).toBeDisabled()
+
+    await page.getByRole('button', { name: 'Aumentar quantidade de Emerald Ape #042' }).click()
+    await expect(page.getByRole('status', { name: 'Quantidade de Emerald Ape #042' })).toHaveText('2')
+    await expect(page.getByRole('button', { name: 'Diminuir quantidade de Emerald Ape #042' })).toBeEnabled()
+
+    await page.getByRole('button', { name: 'Conectar e finalizar' }).click()
+    await expect(page.getByRole('dialog')).toBeVisible()
+    await page.keyboard.press('Escape')
+
+    await page.getByRole('button', { name: 'Remover Emerald Ape #042 do carrinho' }).click()
+    await expect(page.getByText('Seu carrinho está vazio.')).toBeVisible()
+  })
+})
+
+test('carrinho de visitante soma ao carrinho que a conta já tinha ao fazer login', async ({ page }) => {
+  const addToCart = async (nftId: string) => {
+    await page.goto(`/nft/${nftId}`)
+    await page.getByRole('button', { name: 'COMPRAR' }).click()
+    await expect(page).toHaveURL(/\/carrinho$/)
+  }
+  const dialog = page.getByRole('dialog')
+
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Entrar' }).click()
+  await dialog.getByRole('button', { name: 'Criar conta' }).first().click()
+  await page.locator('#auth-name').fill('Conta com carrinho')
+  await page.locator('#auth-email').fill('carrinho-merge-e2e@example.com')
+  await page.locator('#auth-password').fill('senha-forte-1')
+  await page.locator('#auth-confirm-password').fill('senha-forte-1')
+  await page.locator('button[form="auth-form"]').click()
+  await expect(dialog).toBeHidden()
+  await addToCart('emerald-ape-042')
+
+  await page.getByRole('button', { name: /^Menu da conta/ }).click()
+  await page.getByRole('menuitem', { name: 'Sair' }).click()
+  await expect(page.getByRole('button', { name: 'Entrar' })).toBeVisible()
+
+  await addToCart('emerald-ape-042')
+  await addToCart('golden-beat-207')
+
+  await page.getByRole('button', { name: 'Entrar' }).click()
+  await page.locator('#auth-email').fill('carrinho-merge-e2e@example.com')
+  await page.locator('#auth-password').fill('senha-forte-1')
+  await page.locator('button[form="auth-form"]').click()
+  await expect(dialog).toBeHidden()
+
+  await page.goto('/carrinho')
+  await expect(page.getByRole('status', { name: 'Quantidade de Emerald Ape #042' })).toHaveText('2')
+  await expect(page.getByRole('status', { name: 'Quantidade de Golden Beat #207' })).toHaveText('1')
+  await page.reload()
+  await expect(page.getByRole('status', { name: 'Quantidade de Emerald Ape #042' })).toHaveText('2')
 })

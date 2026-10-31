@@ -8,6 +8,7 @@ import { ProfilePage } from './profile-page'
 import { WalletsPage } from './wallets-page'
 import { CheckoutPage } from './checkout-page'
 import { SiteHeader } from './site-header'
+import { MobileTabBar, hidesMobileNav } from './mobile-tab-bar'
 import { AuthPage } from './auth-page'
 import { AuthGatePage } from './auth-gate-page'
 import { authSearchSchema } from '../features/auth/contracts'
@@ -25,6 +26,7 @@ function RootLayout() {
   const [authModal, setAuthModal] = useState<AuthModalRequest | null>(null)
   const navigate = useNavigate()
   const onAuthRoute = useRouterState({ select: (state) => state.location.pathname === '/entrar' })
+  const hideMobileNav = useRouterState({ select: (state) => hidesMobileNav(state.location.pathname) })
   const closeAuth = useCallback(() => {
     setAuthModal(null)
     // /entrar só existe para o modal: fechar lá tem que devolver para a inicial
@@ -36,6 +38,9 @@ function RootLayout() {
   return <AuthModalContext.Provider value={authModalContext}>
     <SiteHeader />
     <Outlet />
+    {/* folga para o conteúdo não terminar embaixo da tab bar fixa */}
+    {!hideMobileNav && <div aria-hidden="true" className="h-[calc(136px+env(safe-area-inset-bottom))] md:hidden" />}
+    <MobileTabBar />
     {authModal && <AuthPage key={authModal.mode} mode={authModal.mode} redirect={authModal.redirect} onClose={closeAuth} />}
   </AuthModalContext.Provider>
 }

@@ -14,8 +14,9 @@ const socialIcons = [
 export function SiteFooter() {
   const [newsletterSubmitted, setNewsletterSubmitted] = useState(false)
 
-  return <footer className="mx-auto mt-24 max-w-[1200px] px-5 sm:px-8 lg:px-0">
-  <div className="grid gap-8 bg-[#241612] p-8 sm:grid-cols-2 lg:h-[250px] lg:grid-cols-[repeat(3,minmax(0,1fr))_357px] lg:gap-0">
+  // o frame mobile não tem rodapé: lá a navegação vive na tab bar
+  return <footer className="mx-auto mt-24 hidden max-w-[1200px] px-5 sm:px-8 md:block lg:px-0">
+  <div className="grid grid-cols-[minmax(0,1fr)] gap-8 bg-[#241612] p-8 sm:grid-cols-[repeat(2,minmax(0,1fr))] lg:h-[250px] lg:grid-cols-[repeat(3,minmax(0,1fr))_357px] lg:gap-0">
     {[
       { mark: 'W', title: 'Segurança da carteira', description: 'Proteja sua carteira e colecione arte digital verificada com confiança.' },
       { mark: 'C', title: 'Criadores em destaque', description: 'Conheça artistas, estúdios e comunidades que moldam a cultura digital na rede.' },
@@ -36,12 +37,12 @@ export function SiteFooter() {
     </div>
   </div>
   <div className="flex flex-col gap-5 bg-[#38220f] px-8 py-6 sm:grid sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-center sm:gap-0 lg:flex lg:h-[88px] lg:flex-row lg:justify-between lg:py-0">
-    <strong className="w-[210px] text-sm tracking-[0.1em]">KURIO</strong>
-    <span className="w-[210px] text-sm leading-[22px]"><span className="whitespace-nowrap">Feito para colecionadores,</span><br /><span className="whitespace-nowrap">criadores e cultura</span></span>
-    <a href="mailto:contato@email.com" className="w-[210px] text-sm leading-[22px] transition-colors hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-[#d28a4c]">contato@email.com</a>
-    <a href="tel:+551140028922" className="w-[228px] text-sm leading-[22px] transition-colors hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-[#d28a4c]">+55 11 4002 8922</a>
+    <strong className="text-sm tracking-[0.1em] lg:w-[210px]">KURIO</strong>
+    <span className="text-sm leading-[22px] lg:w-[210px]"><span className="whitespace-nowrap">Feito para colecionadores,</span><br /><span className="whitespace-nowrap">criadores e cultura</span></span>
+    <a href="mailto:contato@email.com" className="text-sm leading-[22px] transition-colors hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-[#d28a4c] lg:w-[210px]">contato@email.com</a>
+    <a href="tel:+551140028922" className="text-sm leading-[22px] transition-colors hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-[#d28a4c] lg:w-[228px]">+55 11 4002 8922</a>
   </div>
-  <div className="flex flex-col gap-8 bg-[#241612] px-8 py-8 sm:grid sm:grid-cols-2 lg:flex lg:h-[236px] lg:flex-row lg:items-start lg:justify-between">
+  <div className="flex flex-col gap-8 bg-[#241612] px-8 py-8 sm:grid sm:grid-cols-[repeat(2,minmax(0,1fr))] lg:flex lg:h-[236px] lg:flex-row lg:items-start lg:justify-between">
     <div className="flex flex-col gap-2 lg:w-[178.67px]">
       <h2 className="text-lg font-bold leading-4">Meu perfil</h2>
       <ul className="text-sm leading-[30px]"><li><Link to="/perfil" className="transition-colors hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-[#d28a4c]">Meu perfil</Link></li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Minha coleção</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Atividade</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Estúdio do criador</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Lista de interesse</li></ul>

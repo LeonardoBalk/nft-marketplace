@@ -17,7 +17,8 @@ test('carrinho de visitante sobrevive ao cadastro e fecha a compra', async ({ pa
   await page.goto('/nft/emerald-ape-042')
   await page.getByRole('button', { name: 'Aumentar quantidade' }).click()
   await page.getByRole('button', { name: 'COMPRAR' }).click()
-  await expect(page.getByText('2 itens adicionados ao carrinho.')).toBeVisible()
+  await expect(page).toHaveURL(/\/carrinho$/)
+  await expect(page.getByRole('status', { name: 'Quantidade de Emerald Ape #042' })).toHaveText('2')
 
   await page.locator('header a[href="/carrinho"]').click()
   await expect(page).toHaveURL(/\/carrinho$/)
@@ -59,7 +60,7 @@ test('carrinho de visitante sobrevive ao cadastro e fecha a compra', async ({ pa
 test('checkout valida o perfil e aplica cupom', async ({ page }) => {
   await page.goto('/nft/golden-beat-207')
   await page.getByRole('button', { name: 'COMPRAR' }).click()
-  await expect(page.getByText('adicionado ao carrinho.')).toBeVisible()
+  await expect(page).toHaveURL(/\/carrinho$/)
   await page.goto('/checkout')
 
   await page.getByRole('button', { name: 'Confirmar compra' }).click()
@@ -89,6 +90,7 @@ test('a edição escolhida limita a quantidade adicionada', async ({ page }) => 
   await expect(page.getByText('1 disponível na edição 1/1.')).toBeVisible()
 
   await page.getByRole('button', { name: 'COMPRAR' }).click()
-  await expect(page.getByText('1 item adicionado ao carrinho.')).toBeVisible()
+  await expect(page).toHaveURL(/\/carrinho$/)
+  await expect(page.getByRole('status', { name: 'Quantidade de Emerald Ape #042' })).toHaveText('1')
   await expect(page.locator('header a[href="/carrinho"]')).toHaveText('1')
 })

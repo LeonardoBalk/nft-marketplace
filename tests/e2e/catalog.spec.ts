@@ -4,7 +4,6 @@ test('busca e filtros combinados sobrevivem a refresh e histórico', async ({ pa
   await page.goto('/')
   await page.getByRole('button', { name: 'Abrir busca' }).click()
   await page.getByLabel('Buscar NFTs').fill('Golden')
-  await page.getByRole('button', { name: 'Buscar' }).click()
   await expect(page).toHaveURL(/q=Golden/)
   await expect(page.locator('#catalogo').getByText('Golden Beat #207')).toBeVisible()
 
@@ -48,4 +47,41 @@ test('detalhe abre diretamente e NFT inexistente mostra erro', async ({ page }) 
   await expect(page.getByRole('heading', { name: 'Emerald Ape #042' })).toBeVisible()
   await page.goto('/nft/inexistente')
   await expect(page.getByRole('heading', { name: 'NFT não encontrado' })).toBeVisible()
+})
+
+test('abas recortam o catálogo, aceitam teclado e combinam com os filtros', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByRole('tab', { name: 'Todos os NFTs' })).toHaveAttribute('aria-selected', 'true')
+
+  await page.getByRole('tab', { name: 'Novos lançamentos' }).click()
+  await expect(page).toHaveURL(/tab=novos/)
+  await expect(page.getByRole('tab', { name: 'Novos lançamentos' })).toHaveAttribute('aria-selected', 'true')
+  // listados nos últimos 21 dias: três páginas de 9
+  await expect(page.getByRole('button', { name: 'Página 3' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Página 4' })).toHaveCount(0)
+
+  await page.getByRole('tab', { name: 'Novos lançamentos' }).press('ArrowRight')
+  await expect(page).toHaveURL(/tab=em-alta/)
+  await expect(page.getByRole('tab', { name: 'Em alta' })).toBeFocused()
+
+  await page.getByRole('button', { name: 'Música' }).click()
+  await expect(page).toHaveURL(/tab=em-alta/)
+  await expect(page).toHaveURL(/category=M%C3%BAsica/)
+
+  await page.reload()
+  await expect(page.getByRole('tab', { name: 'Em alta' })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByRole('button', { name: 'Música' })).toHaveAttribute('aria-pressed', 'true')
+})
+
+test.describe('busca no mobile', () => {
+  test.use({ viewport: { width: 414, height: 896 } })
+
+  test('o botão central da tab bar abre a busca com foco no campo', async ({ page }) => {
+    await page.goto('/')
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+    await page.getByRole('link', { name: 'Explorar coleções' }).click()
+    await expect(page.locator('#buscar')).toBeFocused()
+    await page.keyboard.type('Golden')
+    await expect(page).toHaveURL(/q=Golden/)
+  })
 })

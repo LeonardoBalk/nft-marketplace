@@ -15,7 +15,7 @@ async function signUp(page: import('@playwright/test').Page, email: string) {
 async function addToCart(page: import('@playwright/test').Page, nftId: string) {
   await page.goto(`/nft/${nftId}`)
   await page.getByRole('button', { name: 'COMPRAR' }).click()
-  await expect(page.getByText('adicionado ao carrinho.')).toBeVisible()
+  await expect(page).toHaveURL(/\/carrinho$/)
 }
 
 test('rota privada sem sessão cai em /entrar e retoma o destino', async ({ page }) => {
