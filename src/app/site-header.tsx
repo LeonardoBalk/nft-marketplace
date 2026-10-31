@@ -3,7 +3,7 @@ import { useState, type FormEvent } from 'react'
 import { LogOut, Search, ShoppingCart } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { defaultCatalogSearch } from '../features/catalog/contracts'
-import { useCart } from '../features/cart/cart-context'
+import { useCart } from '../features/cart/queries'
 
 export function SiteHeader() {
   const [searchOpen, setSearchOpen] = useState(false)

@@ -6,12 +6,12 @@ import { ArrowLeft, Heart, ShoppingCart } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { nftQuery } from '../features/catalog/queries'
 import { defaultCatalogSearch } from '../features/catalog/contracts'
-import { useCart } from '../features/cart/cart-context'
+import { useAddCartItem } from '../features/cart/queries'
 
 export function NftDetailPage() {
   const { nftId } = useParams({ from: '/nft/$nftId' })
   const nft = useQuery(nftQuery(nftId))
-  const { addItem } = useCart()
+  const addItem = useAddCartItem()
   const [addedToCart, setAddedToCart] = useState(false)
 
   if (nft.isPending) return <main className="mx-auto max-w-[1200px] px-5 py-14 sm:px-8" role="status"><div className="grid animate-pulse gap-10 motion-reduce:animate-none md:grid-cols-2"><div className="aspect-square rounded-2xl bg-[#38251e]" /><div className="space-y-6"><div className="h-10 w-2/3 bg-[#38251e]" /><div className="h-6 w-1/3 bg-[#38251e]" /></div></div><span className="sr-only">Carregando detalhe do NFT...</span></main>
@@ -33,7 +33,7 @@ export function NftDetailPage() {
         <h1 className="mt-3 text-3xl font-bold sm:text-4xl">{nft.data.name}</h1>
         <p className="mt-5 text-sm leading-7 text-[#bca594]">Uma peça da coleção {nft.data.collection}, disponível na rede {nft.data.network}. Edição limitada a {nft.data.edition} unidades.</p>
         <div className="mt-8 border-y border-[#4d3026] py-6"><p className="text-sm text-[#bca594]">Preço atual</p><p className="mt-2 text-3xl font-semibold text-[#d99558]">{nft.data.priceEth} ETH</p><p className="mt-3 text-xs text-[#bca594]">{nft.data.available} disponíveis</p></div>
-        <div className="mt-7 flex flex-wrap gap-3"><Button disabled={nft.data.available < 1} onClick={() => { addItem(nft.data.id, nft.data.available); setAddedToCart(true) }}><ShoppingCart size={17} /> Adicionar ao carrinho</Button><Button variant="outline" disabled><Heart size={17} /> Favoritar</Button></div>
+        <div className="mt-7 flex flex-wrap gap-3"><Button disabled={nft.data.available < 1} onClick={() => addItem.mutate({ nftId: nft.data.id, quantity: 1 }, { onSuccess: () => setAddedToCart(true) })}><ShoppingCart size={17} /> Adicionar ao carrinho</Button><Button variant="outline" disabled><Heart size={17} /> Favoritar</Button></div>
         <p role={addedToCart ? 'status' : undefined} className="mt-4 text-xs text-[#967d6b]">{addedToCart ? 'Item adicionado ao carrinho.' : 'O carrinho é salvo neste navegador. Favoritos estarão disponíveis no próximo fluxo.'}</p>
       </div>
     </div>
