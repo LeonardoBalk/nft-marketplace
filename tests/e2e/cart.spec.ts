@@ -3,8 +3,10 @@ import { expect, test } from '@playwright/test'
 test('carrinho altera quantidade, remove item e sobrevive ao refresh', async ({ page }) => {
   await page.goto('/nft/emerald-ape-042')
   await page.getByRole('button', { name: 'COMPRAR' }).click()
+  await expect(page.getByText('adicionado ao carrinho.')).toBeVisible()
   await page.goto('/nft/violet-nomad-314')
   await page.getByRole('button', { name: 'COMPRAR' }).click()
+  await expect(page.getByText('adicionado ao carrinho.')).toBeVisible()
 
   await page.goto('/carrinho')
   await expect(page.getByRole('link', { name: 'Emerald Ape #042' })).toBeVisible()
@@ -30,6 +32,7 @@ test('carrinho altera quantidade, remove item e sobrevive ao refresh', async ({ 
 test('cupom expirado e inválido são tratados no carrinho', async ({ page }) => {
   await page.goto('/nft/golden-beat-207')
   await page.getByRole('button', { name: 'COMPRAR' }).click()
+  await expect(page.getByText('adicionado ao carrinho.')).toBeVisible()
   await page.goto('/carrinho')
 
   await page.getByLabel('Código promocional').fill('EXPIRADO')
@@ -45,6 +48,7 @@ test('cupom expirado e inválido são tratados no carrinho', async ({ page }) =>
 test('conectar e finalizar pede login quando o visitante não tem sessão', async ({ page }) => {
   await page.goto('/nft/cosmic-bloom-118')
   await page.getByRole('button', { name: 'COMPRAR' }).click()
+  await expect(page.getByText('adicionado ao carrinho.')).toBeVisible()
   await page.goto('/carrinho')
 
   await page.getByRole('button', { name: 'Conectar e finalizar' }).click()

@@ -59,6 +59,7 @@ test('carrinho de visitante sobrevive ao cadastro e fecha a compra', async ({ pa
 test('checkout valida o perfil e aplica cupom', async ({ page }) => {
   await page.goto('/nft/golden-beat-207')
   await page.getByRole('button', { name: 'COMPRAR' }).click()
+  await expect(page.getByText('adicionado ao carrinho.')).toBeVisible()
   await page.goto('/checkout')
 
   await page.getByRole('button', { name: 'Confirmar compra' }).click()
