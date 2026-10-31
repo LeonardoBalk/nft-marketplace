@@ -10,7 +10,9 @@
     "typecheck": "tsc -b --noEmit",
     "lint": "eslint .",
     "test:e2e": "playwright test",
-    "audit": "lhci autorun"
+    "audit": "npm run audit:desktop && npm run audit:mobile",
+    "audit:desktop": "lhci autorun --config=lighthouse/desktop.json",
+    "audit:mobile": "lhci autorun --config=lighthouse/mobile.json"
   },
   "dependencies": {
     "@mswjs/socket.io-binding": "^0.2.0",
