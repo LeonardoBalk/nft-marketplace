@@ -18,7 +18,7 @@ const labelClass = 'sr-only'
 function SocialButtons() {
   return (
     <div className="flex flex-col items-center gap-4 px-4 sm:px-10">
-      <Button type="button" variant="outline" disabled className="h-10 w-full gap-3 border-[#3f2319] bg-transparent text-[13px] font-medium text-[#cfb28c] opacity-100 disabled:cursor-not-allowed disabled:opacity-100" style={{ maxWidth: 340, borderRadius: 5 }}>
+      <Button type="button" variant="outline" disabled title="Fora do escopo desta entrega" className="h-10 w-full gap-3 border-[#3f2319] bg-transparent text-[13px] font-medium text-[#cfb28c] opacity-100 disabled:cursor-not-allowed disabled:opacity-100" style={{ maxWidth: 340, borderRadius: 5 }}>
         <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" focusable="false">
           <path fill="#4285F4" d="M23.49 12.275c0-.806-.072-1.582-.205-2.327H12v4.404h6.448a5.51 5.51 0 0 1-2.391 3.614v3.002h3.871c2.266-2.087 3.562-5.163 3.562-8.693Z" />
           <path fill="#34A853" d="M12 24c3.24 0 5.956-1.075 7.94-2.91l-3.87-3.002c-1.075.72-2.45 1.146-4.07 1.146-3.129 0-5.78-2.111-6.729-4.951H1.269v3.097A11.995 11.995 0 0 0 12 24Z" />
@@ -27,7 +27,7 @@ function SocialButtons() {
         </svg>
         Continuar com Google
       </Button>
-      <Button type="button" variant="outline" disabled className="h-10 w-full gap-3 border-[#3f2319] bg-transparent text-[13px] font-medium text-[#cfb28c] opacity-100 disabled:cursor-not-allowed disabled:opacity-100" style={{ maxWidth: 340, borderRadius: 5 }}>
+      <Button type="button" variant="outline" disabled title="Fora do escopo desta entrega" className="h-10 w-full gap-3 border-[#3f2319] bg-transparent text-[13px] font-medium text-[#cfb28c] opacity-100 disabled:cursor-not-allowed disabled:opacity-100" style={{ maxWidth: 340, borderRadius: 5 }}>
         <span aria-hidden="true" className="text-[22px] font-bold leading-none text-[#3b5999]">f</span>
         Continuar com Facebook
       </Button>
