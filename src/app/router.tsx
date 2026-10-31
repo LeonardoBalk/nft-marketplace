@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { CatalogPage } from './catalog-page'
 import { NftDetailPage } from './nft-detail-page'
 import { CartPage } from './cart-page'
+import { FavoritesPage } from './favorites-page'
 import { ProfilePage } from './profile-page'
 import { WalletsPage } from './wallets-page'
 import { CheckoutPage } from './checkout-page'
@@ -13,6 +14,7 @@ import { authSearchSchema } from '../features/auth/contracts'
 import { AuthModalContext, type AuthModalRequest } from '../features/auth/modal-context'
 import { getAccessToken } from '../features/auth/session'
 import { catalogSearchSchema, defaultCatalogSearch } from '../features/catalog/contracts'
+import { favoritesSearchSchema } from '../features/favorites/contracts'
 
 // barra o fluxo privado antes de montar a tela e guarda o destino para retomar
 function requireSession({ location }: { location: { href: string } }) {
@@ -83,13 +85,21 @@ const walletsRoute = createRoute({
   beforeLoad: requireSession,
 })
 
+const favoritesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/favoritos',
+  component: FavoritesPage,
+  beforeLoad: requireSession,
+  validateSearch: (search) => favoritesSearchSchema.parse(search),
+})
+
 const checkoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/checkout',
   component: CheckoutPage,
 })
 
-export const router = createRouter({ routeTree: rootRoute.addChildren([catalogRoute, nftDetailRoute, cartRoute, checkoutRoute, authGateRoute, profileRoute, walletsRoute]) })
+export const router = createRouter({ routeTree: rootRoute.addChildren([catalogRoute, nftDetailRoute, cartRoute, checkoutRoute, authGateRoute, profileRoute, walletsRoute, favoritesRoute]) })
 
 declare module '@tanstack/react-router' {
   interface Register {

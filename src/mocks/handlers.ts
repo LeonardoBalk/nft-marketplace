@@ -4,6 +4,7 @@ import { loginSchema, registerRequestSchema } from '../features/auth/contracts'
 import { authenticateMockRequest, changeMockPassword, deleteMockSession, loginMockUser, registerMockUser, updateMockUser } from './auth-store'
 import { avatarSchema, passwordChangeSchema, profileSchema, walletSchema } from '../features/account/contracts'
 import { deleteWallet, readProfile, readWallets, writeAvatar, writeProfile, writeWallet } from './account-store'
+import { addFavorite, readFavorites, removeFavorite } from './favorites-store'
 import { catalogSearchSchema } from '../features/catalog/contracts'
 import { cartItemRequestSchema, cartQuantitySchema, checkoutSchema, couponRequestSchema, type CartSummary } from '../features/cart/contracts'
 import { addCartItem, applyCartCoupon, createOrder, getOrder, mergeGuestCart, readCart, removeCartCoupon, removeCartItem, resolveCartOwner, updateCartItem } from './commerce-store'
@@ -75,6 +76,23 @@ export const handlers = [
     const result = await changeMockPassword(user.id, parsed.data.currentPassword, parsed.data.newPassword)
     if (result === 'INVALID_PASSWORD') return HttpResponse.json({ code: 'INVALID_PASSWORD', message: 'A senha atual não confere.' }, { status: 422 })
     return new HttpResponse(null, { status: 204 })
+  }),
+  http.get('/api/favorites', async ({ request }) => {
+    const user = await authenticateMockRequest(request)
+    if (!user) return HttpResponse.json({ code: 'SESSION_INVALID', message: 'Entre para ver seus favoritos.' }, { status: 401 })
+    return HttpResponse.json(readFavorites(user))
+  }),
+  http.put('/api/favorites/:nftId', async ({ params, request }) => {
+    const user = await authenticateMockRequest(request)
+    if (!user) return HttpResponse.json({ code: 'SESSION_INVALID', message: 'Entre para favoritar.' }, { status: 401 })
+    const nftId = String(params.nftId)
+    if (!getNft(nftId)) return HttpResponse.json({ code: 'NFT_NOT_FOUND', message: 'NFT não encontrado.' }, { status: 404 })
+    return HttpResponse.json(addFavorite(user, nftId))
+  }),
+  http.delete('/api/favorites/:nftId', async ({ params, request }) => {
+    const user = await authenticateMockRequest(request)
+    if (!user) return HttpResponse.json({ code: 'SESSION_INVALID', message: 'Entre para favoritar.' }, { status: 401 })
+    return HttpResponse.json(removeFavorite(user, String(params.nftId)))
   }),
   http.get('/api/wallets', async ({ request }) => {
     const user = await authenticateMockRequest(request)
