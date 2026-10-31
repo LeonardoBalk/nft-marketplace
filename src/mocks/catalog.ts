@@ -14,6 +14,10 @@ const initialNfts: NftSummary[] = [
   { id: 'emerald-ape-043', name: 'Emerald Ape #043', collection: 'Kurio Apes', category: 'Colecionáveis', network: 'ethereum', artwork: '/artwork/emerald-ape.png', priceEth: '1.49', available: 18, edition: 100, version: 1 },
   { id: 'sage-nomad-010', name: 'Sage Nomad #010', collection: 'Kurio Apes', category: 'Assinaturas', network: 'polygon', artwork: '/artwork/cosmic-bloom.png', priceEth: '0.89', available: 20, edition: 50, version: 1 },
   { id: 'neon-vessel-553', name: 'Neon Vessel #553', collection: 'Kurio Apes', category: 'Utilidade', network: 'solana', artwork: '/artwork/neon-vessel.png', priceEth: '2.19', available: 6, edition: 25, version: 1 },
+  { id: 'emerald-ape-044', name: 'Emerald Ape #044', collection: 'Kurio Apes', category: 'Colecionáveis', network: 'ethereum', artwork: '/artwork/emerald-ape.png', priceEth: '1.59', available: 16, edition: 100, version: 1 },
+  { id: 'sage-nomad-011', name: 'Sage Nomad #011', collection: 'Kurio Apes', category: 'Arte digital', network: 'polygon', artwork: '/artwork/cosmic-bloom.png', priceEth: '1.09', available: 24, edition: 50, version: 1 },
+  { id: 'ivory-baron-089', name: 'Ivory Baron #089', collection: 'Kurio Apes', category: 'Fotografia', network: 'ethereum', artwork: '/artwork/neon-vessel.png', priceEth: '1.49', available: 11, edition: 50, version: 1 },
+  { id: 'neon-vessel-556', name: 'Neon Vessel #556', collection: 'Kurio Apes', category: 'Arte 3D', network: 'solana', artwork: '/artwork/neon-vessel.png', priceEth: '2.09', available: 9, edition: 25, version: 1 },
 ]
 
 const extraArtwork = [
@@ -106,6 +110,15 @@ export function listNfts(search: CatalogSearch): NftPage {
       networks: catalogFacets.networks.map((facet) => ({ ...facet })),
     },
   }
+}
+
+export function getRelatedNfts(nftId: string, limit = 15): NftSummary[] {
+  const nft = nfts.find((entry) => entry.id === nftId)
+  if (!nft) return []
+  return nfts
+    .filter((entry) => entry.id !== nft.id && entry.collection === nft.collection)
+    .slice(0, limit)
+    .map((entry) => ({ ...entry }))
 }
 
 export function getNft(nftId: string): NftSummary | null {

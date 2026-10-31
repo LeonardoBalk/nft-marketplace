@@ -5,7 +5,7 @@ import { authenticateMockRequest, deleteMockSession, loginMockUser, registerMock
 import { catalogSearchSchema } from '../features/catalog/contracts'
 import { cartItemRequestSchema, cartQuantitySchema, couponRequestSchema, type CartSummary } from '../features/cart/contracts'
 import { addCartItem, applyCartCoupon, mergeGuestCart, readCart, removeCartCoupon, removeCartItem, resolveCartOwner, updateCartItem } from './commerce-store'
-import { changeNftPrice, getNft, listNfts } from './catalog'
+import { changeNftPrice, getNft, getRelatedNfts, listNfts } from './catalog'
 
 const socketUrl = `${window.location.origin.replace(/^http/, 'ws')}/realtime/`
 const nftSocket = ws.link(socketUrl)
@@ -87,6 +87,10 @@ export const handlers = [
   http.get('/api/nfts', ({ request }) => {
     const params = Object.fromEntries(new URL(request.url).searchParams)
     return HttpResponse.json(listNfts(catalogSearchSchema.parse(params)))
+  }),
+  http.get('/api/nfts/:nftId/related', ({ params }) => {
+    const nft = getNft(String(params.nftId))
+    return nft ? HttpResponse.json({ items: getRelatedNfts(nft.id) }) : HttpResponse.json({ code: 'NFT_NOT_FOUND' }, { status: 404 })
   }),
   http.get('/api/nfts/:nftId', ({ params }) => {
     const nft = getNft(String(params.nftId))
