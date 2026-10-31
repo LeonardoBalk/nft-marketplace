@@ -1,11 +1,23 @@
 import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/react-router'
+import { useCallback, useMemo, useState } from 'react'
 import { CatalogPage } from './catalog-page'
 import { NftDetailPage } from './nft-detail-page'
 import { SiteHeader } from './site-header'
+import { AuthPage } from './auth-page'
+import { AuthModalContext, type AuthModalRequest } from '../features/auth/modal-context'
 import { catalogSearchSchema } from '../features/catalog/contracts'
 
 function RootLayout() {
-  return <><SiteHeader /><Outlet /></>
+  const [authModal, setAuthModal] = useState<AuthModalRequest | null>(null)
+  const closeAuth = useCallback(() => setAuthModal(null), [])
+  const openAuth = useCallback((mode: AuthModalRequest['mode'], redirect?: string) => setAuthModal({ mode, redirect }), [])
+  const authModalContext = useMemo(() => ({ openAuth, closeAuth }), [openAuth, closeAuth])
+
+  return <AuthModalContext.Provider value={authModalContext}>
+    <SiteHeader />
+    <Outlet />
+    {authModal && <AuthPage key={authModal.mode} mode={authModal.mode} redirect={authModal.redirect} onClose={closeAuth} />}
+  </AuthModalContext.Provider>
 }
 
 function NotFound() {
