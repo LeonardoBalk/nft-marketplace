@@ -68,8 +68,9 @@ export function useApplyCoupon() {
 export function useCheckout() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (input: CheckoutRequest) => {
-      const response = await api.post<OrderReceipt>('/orders', input)
+    // chave vem de fora e sobrevive à retentativa: clique repetido não duplica pedido
+    mutationFn: async ({ input, idempotencyKey }: { input: CheckoutRequest; idempotencyKey: string }) => {
+      const response = await api.post<OrderReceipt>('/orders', input, { headers: { 'Idempotency-Key': idempotencyKey } })
       return response.data
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: cartKey }),

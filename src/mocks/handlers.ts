@@ -6,7 +6,7 @@ import { avatarSchema, passwordChangeSchema, profileSchema, walletSchema } from 
 import { deleteWallet, readProfile, readWallets, writeAvatar, writeProfile, writeWallet } from './account-store'
 import { catalogSearchSchema } from '../features/catalog/contracts'
 import { cartItemRequestSchema, cartQuantitySchema, checkoutSchema, couponRequestSchema, type CartSummary } from '../features/cart/contracts'
-import { addCartItem, applyCartCoupon, checkoutCart, mergeGuestCart, readCart, removeCartCoupon, removeCartItem, resolveCartOwner, updateCartItem } from './commerce-store'
+import { addCartItem, applyCartCoupon, createOrder, getOrder, mergeGuestCart, readCart, removeCartCoupon, removeCartItem, resolveCartOwner, updateCartItem } from './commerce-store'
 import { changeNftPrice, getNft, getRelatedNfts, listNfts } from './catalog'
 
 const socketUrl = `${window.location.origin.replace(/^http/, 'ws')}/realtime/`
@@ -145,16 +145,22 @@ export const handlers = [
     if (!parsed.success) return HttpResponse.json({ code: 'VALIDATION_ERROR', message: 'Confira os dados do perfil e da carteira.' }, { status: 422 })
     const owner = resolveCartOwner(user, request)
     if (!owner) return HttpResponse.json({ code: 'CART_OWNER_INVALID', message: 'Não foi possível identificar o carrinho.' }, { status: 400 })
-    const result = checkoutCart(owner)
+
+    const idempotencyKey = request.headers.get('idempotency-key')
+    if (!idempotencyKey) return HttpResponse.json({ code: 'IDEMPOTENCY_KEY_REQUIRED', message: 'Informe uma chave de idempotência.' }, { status: 400 })
+
+    const result = createOrder(owner, idempotencyKey, JSON.stringify(parsed.data), { wallet: parsed.data.walletType, network: parsed.data.network })
     if (result === 'CART_EMPTY') return HttpResponse.json({ code: 'CART_EMPTY', message: 'Seu carrinho está vazio.' }, { status: 409 })
-    // recibo preserva snapshot do pedido
-    return HttpResponse.json({
-      ...result,
-      transactionHash: `0x${crypto.randomUUID().replace(/-/g, '').toUpperCase().slice(0, 40)}`,
-      createdAt: new Date().toISOString(),
-      wallet: parsed.data.walletType,
-      network: parsed.data.network,
-    }, { status: 201 })
+    if (result === 'IDEMPOTENCY_CONFLICT') return HttpResponse.json({ code: 'IDEMPOTENCY_CONFLICT', message: 'Esta chave já foi usada para outro pedido.' }, { status: 409 })
+    // repetir a mesma tentativa devolve o pedido original, sem cobrar de novo
+    return HttpResponse.json(result.receipt, { status: result.status === 'created' ? 201 : 200 })
+  }),
+  http.get('/api/orders/:orderId', async ({ params, request }) => {
+    const user = await authenticateMockRequest(request)
+    if (!user) return HttpResponse.json({ code: 'SESSION_INVALID', message: 'Entre para ver seus pedidos.' }, { status: 401 })
+    const owner = resolveCartOwner(user, request)
+    const receipt = owner ? getOrder(owner, String(params.orderId)) : null
+    return receipt ? HttpResponse.json(receipt) : HttpResponse.json({ code: 'ORDER_NOT_FOUND', message: 'Pedido não encontrado.' }, { status: 404 })
   }),
   http.get('/api/nfts', ({ request }) => {
     const params = Object.fromEntries(new URL(request.url).searchParams)

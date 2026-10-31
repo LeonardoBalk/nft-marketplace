@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { isAxiosError } from 'axios'
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
@@ -82,6 +82,7 @@ export function CheckoutPage() {
   const [walletSlot, setWalletSlot] = useState<WalletSlot>('primary')
   const [receipt, setReceipt] = useState<OrderReceipt | null>(null)
   const [reviewedQuote, setReviewedQuote] = useState<string | null>(null)
+  const idempotencyKey = useRef<string | null>(null)
 
   const savedWallet = (walletSlot === 'secondary' ? wallets.data?.secondary : wallets.data?.primary) ?? null
   const currentQuote = quoteOf(cart)
@@ -116,8 +117,12 @@ export function CheckoutPage() {
     const fresh = await queryClient.fetchQuery({ ...cartQuery(), staleTime: 0 })
     if (quoteOf(fresh) !== reviewedQuote) return
 
+    // a chave só troca após pedido concluído: resposta perdida recupera o mesmo pedido
+    idempotencyKey.current ??= crypto.randomUUID()
+
     try {
-      setReceipt(await checkout.mutateAsync(parsed.data as CheckoutRequest))
+      setReceipt(await checkout.mutateAsync({ input: parsed.data as CheckoutRequest, idempotencyKey: idempotencyKey.current }))
+      idempotencyKey.current = null
     } catch (error) {
       // retomar checkout sem perder o carrinho
       if (isAxiosError(error) && error.response?.status === 401) openAuth('login', '/checkout')

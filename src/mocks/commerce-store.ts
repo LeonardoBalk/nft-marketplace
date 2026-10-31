@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import type { AuthUser } from '../features/auth/contracts'
-import type { CartSummary } from '../features/cart/contracts'
+import type { CartSummary, OrderReceipt } from '../features/cart/contracts'
 import { ethToWei } from '../shared/money/eth'
 import { getNft } from './catalog'
 
@@ -8,6 +8,11 @@ const storeKey = 'kurio.demo.commerce.v1'
 const storeSchema = z.object({
   carts: z.record(z.string(), z.array(z.object({ nftId: z.string(), quantity: z.number().int().positive() }))),
   coupons: z.record(z.string(), z.string().nullable()),
+  orders: z.record(z.string(), z.object({
+    owner: z.string(),
+    fingerprint: z.string(),
+    receipt: z.unknown(),
+  })).default({}),
 })
 type CommerceStore = z.infer<typeof storeSchema>
 
@@ -17,9 +22,9 @@ function loadStore(): CommerceStore {
     const parsed = raw ? storeSchema.safeParse(JSON.parse(raw)) : null
     if (parsed?.success) return parsed.data
   } catch {
-    return { carts: {}, coupons: {} }
+    return { carts: {}, coupons: {}, orders: {} }
   }
-  return { carts: {}, coupons: {} }
+  return { carts: {}, coupons: {}, orders: {} }
 }
 
 function saveStore(store: CommerceStore): void {
@@ -137,14 +142,52 @@ export function mergeGuestCart(user: AuthUser, guestId: string | null): CartSumm
   return readCart(owner)
 }
 
-export function checkoutCart(owner: string): { orderId: string; summary: CartSummary } | 'CART_EMPTY' {
+export interface OrderDetails {
+  wallet: OrderReceipt['wallet']
+  network: OrderReceipt['network']
+}
+
+export type OrderResult =
+  | { status: 'created' | 'replayed'; receipt: OrderReceipt }
+  | 'CART_EMPTY'
+  | 'IDEMPOTENCY_CONFLICT'
+
+// mesma chave recupera o mesmo pedido; chave reutilizada com outro conteúdo é conflito
+export function createOrder(owner: string, idempotencyKey: string, fingerprint: string, details: OrderDetails): OrderResult {
+  const store = loadStore()
+  const existing = store.orders[idempotencyKey]
+  if (existing) {
+    if (existing.owner !== owner || existing.fingerprint !== fingerprint) return 'IDEMPOTENCY_CONFLICT'
+    return { status: 'replayed', receipt: existing.receipt as OrderReceipt }
+  }
+
   const summary = readCart(owner)
   if (!summary.items.length) return 'CART_EMPTY'
-  const store = loadStore()
+
+  const receipt: OrderReceipt = {
+    orderId: `KURIO-${Date.now().toString(36).toUpperCase()}`,
+    transactionHash: `0x${crypto.randomUUID().replace(/-/g, '').toUpperCase().slice(0, 40)}`,
+    createdAt: new Date().toISOString(),
+    wallet: details.wallet,
+    network: details.network,
+    // snapshot: mudança posterior no catálogo não altera o recibo
+    summary,
+  }
+
   delete store.carts[owner]
   delete store.coupons[owner]
+  store.orders[idempotencyKey] = { owner, fingerprint, receipt }
   saveStore(store)
-  return { orderId: `KURIO-${Date.now().toString(36).toUpperCase()}`, summary }
+  return { status: 'created', receipt }
+}
+
+export function getOrder(owner: string, orderId: string): OrderReceipt | null {
+  const store = loadStore()
+  for (const entry of Object.values(store.orders)) {
+    const receipt = entry.receipt as OrderReceipt
+    if (entry.owner === owner && receipt.orderId === orderId) return receipt
+  }
+  return null
 }
 
 export function resolveCartOwner(user: AuthUser | null, request: Request): string | null {
