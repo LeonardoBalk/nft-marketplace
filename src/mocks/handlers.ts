@@ -3,8 +3,8 @@ import { toSocketIo } from '@mswjs/socket.io-binding'
 import { loginSchema, registerRequestSchema } from '../features/auth/contracts'
 import { authenticateMockRequest, deleteMockSession, loginMockUser, registerMockUser } from './auth-store'
 import { catalogSearchSchema } from '../features/catalog/contracts'
-import { cartItemRequestSchema, cartQuantitySchema, couponRequestSchema, type CartSummary } from '../features/cart/contracts'
-import { addCartItem, applyCartCoupon, mergeGuestCart, readCart, removeCartCoupon, removeCartItem, resolveCartOwner, updateCartItem } from './commerce-store'
+import { cartItemRequestSchema, cartQuantitySchema, checkoutSchema, couponRequestSchema, type CartSummary } from '../features/cart/contracts'
+import { addCartItem, applyCartCoupon, checkoutCart, mergeGuestCart, readCart, removeCartCoupon, removeCartItem, resolveCartOwner, updateCartItem } from './commerce-store'
 import { changeNftPrice, getNft, getRelatedNfts, listNfts } from './catalog'
 
 const socketUrl = `${window.location.origin.replace(/^http/, 'ws')}/realtime/`
@@ -83,6 +83,24 @@ export const handlers = [
     const user = await authenticateMockRequest(request)
     if (!user) return HttpResponse.json({ code: 'SESSION_INVALID', message: 'Entre para continuar.' }, { status: 401 })
     return HttpResponse.json(mergeGuestCart(user, request.headers.get('x-guest-id')))
+  }),
+  http.post('/api/orders', async ({ request }) => {
+    const user = await authenticateMockRequest(request)
+    if (!user) return HttpResponse.json({ code: 'SESSION_INVALID', message: 'Entre para finalizar a compra.' }, { status: 401 })
+    const parsed = checkoutSchema.safeParse(await request.json().catch(() => null))
+    if (!parsed.success) return HttpResponse.json({ code: 'VALIDATION_ERROR', message: 'Confira os dados do perfil e da carteira.' }, { status: 422 })
+    const owner = resolveCartOwner(user, request)
+    if (!owner) return HttpResponse.json({ code: 'CART_OWNER_INVALID', message: 'Não foi possível identificar o carrinho.' }, { status: 400 })
+    const result = checkoutCart(owner)
+    if (result === 'CART_EMPTY') return HttpResponse.json({ code: 'CART_EMPTY', message: 'Seu carrinho está vazio.' }, { status: 409 })
+    // recibo preserva snapshot do pedido
+    return HttpResponse.json({
+      ...result,
+      transactionHash: `0x${crypto.randomUUID().replace(/-/g, '').toUpperCase().slice(0, 40)}`,
+      createdAt: new Date().toISOString(),
+      wallet: parsed.data.walletType,
+      network: parsed.data.network,
+    }, { status: 201 })
   }),
   http.get('/api/nfts', ({ request }) => {
     const params = Object.fromEntries(new URL(request.url).searchParams)

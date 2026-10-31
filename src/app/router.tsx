@@ -2,6 +2,7 @@ import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/re
 import { useCallback, useMemo, useState } from 'react'
 import { CatalogPage } from './catalog-page'
 import { NftDetailPage } from './nft-detail-page'
+import { CheckoutPage } from './checkout-page'
 import { SiteHeader } from './site-header'
 import { AuthPage } from './auth-page'
 import { AuthModalContext, type AuthModalRequest } from '../features/auth/modal-context'
@@ -38,7 +39,13 @@ const nftDetailRoute = createRoute({
   component: NftDetailPage,
 })
 
-export const router = createRouter({ routeTree: rootRoute.addChildren([catalogRoute, nftDetailRoute]) })
+const checkoutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/checkout',
+  component: CheckoutPage,
+})
+
+export const router = createRouter({ routeTree: rootRoute.addChildren([catalogRoute, nftDetailRoute, checkoutRoute]) })
 
 declare module '@tanstack/react-router' {
   interface Register {

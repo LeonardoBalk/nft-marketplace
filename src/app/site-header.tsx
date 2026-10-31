@@ -17,7 +17,7 @@ export function SiteHeader() {
   const { openAuth } = useAuthModal()
   const navigate = useNavigate()
   const pathname = useRouterState({ select: (state) => state.location.pathname })
-  const marketActive = pathname.startsWith('/nft/')
+  const marketActive = pathname.startsWith('/nft/') || pathname === '/checkout'
 
   useEffect(() => {
     setSearchQuery(routeQuery)
