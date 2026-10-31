@@ -117,7 +117,7 @@ export function CatalogPage() {
           <div className="mt-10 hidden justify-end gap-2 lg:flex" aria-hidden="true"><span className="size-2 rounded-full bg-[#d28a4c]" /><span className="size-2 rounded-full bg-[#d28a4c]" /><span className="size-2 rounded-full bg-[#d28a4c]" /></div>
         </div>
         <Link to="/nft/$nftId" params={{ nftId: 'emerald-ape-042' }} className="group block aspect-square w-full max-w-[450px] overflow-hidden rounded-[24px] focus-visible:outline-2 focus-visible:outline-[#d28a4c]">
-          <img src="/artwork/emerald-ape.png" alt="Emerald Ape #042, macaco de jaqueta verde e óculos" className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transition-none" width="450" height="450" fetchPriority="high" />
+          <img src="/artwork/emerald-ape.webp" alt="Emerald Ape #042, macaco de jaqueta verde e óculos" className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transition-none" width="450" height="450" fetchPriority="high" />
         </Link>
       </section>
 
@@ -158,7 +158,7 @@ export function CatalogPage() {
             <div className="h-[470px] bg-[linear-gradient(180deg,rgba(210,138,76,0.1)_0%,rgba(210,138,76,0.03)_100%)] pb-1 pt-6 text-center">
               <p className="px-5 text-2xl font-bold uppercase leading-8 text-[#e89b55]">NFT em destaque</p>
               <p className="mt-4 px-5 text-[22px] font-bold uppercase leading-4">Oferta limitada</p>
-              <Link to="/nft/$nftId" params={{ nftId: 'cosmic-bloom-118' }} className="group mt-4 block overflow-hidden rounded-[22px] focus-visible:outline-2 focus-visible:outline-[#d28a4c]"><img src="/artwork/cosmic-bloom.png" alt="Cosmic Bloom #118" width="310" height="368" className="h-[368px] w-full object-cover transition-transform duration-300 group-hover:scale-[1.04] motion-reduce:transition-none" loading="lazy" /></Link>
+              <Link to="/nft/$nftId" params={{ nftId: 'cosmic-bloom-118' }} className="group mt-4 block overflow-hidden rounded-[22px] focus-visible:outline-2 focus-visible:outline-[#d28a4c]"><img src="/artwork/cosmic-bloom.webp" alt="Cosmic Bloom #118" width="310" height="368" className="h-[368px] w-full object-cover transition-transform duration-300 group-hover:scale-[1.04] motion-reduce:transition-none" loading="lazy" /></Link>
             </div>
           </aside>
 

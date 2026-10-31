@@ -4,21 +4,21 @@ import { Button } from '../components/ui/button'
 import { SiteFooter } from './site-footer'
 
 const stories = [
-  { title: 'Como funciona a propriedade de NFTs', image: '/artwork/neon-vessel.png', date: '12 de setembro', readingTime: 6, description: 'Aprenda a colecionar, negociar e verificar ativos digitais.' },
-  { title: '10 artistas digitais para acompanhar', image: '/artwork/emerald-ape.png', date: '13 de setembro', readingTime: 2, description: 'Conheça criadores que moldam a cultura digital.' },
-  { title: 'Raridade, atributos e procedência', image: '/artwork/cosmic-bloom.png', date: '15 de setembro', readingTime: 3, description: 'Entenda raridade, procedência, direitos autorais e utilidade.' },
-  { title: 'Como proteger sua carteira', image: '/artwork/golden-beat.png', date: '15 de setembro', readingTime: 2, description: 'Proteja sua carteira, seus ativos e sua identidade.' },
+  { title: 'Como funciona a propriedade de NFTs', image: '/artwork/neon-vessel.webp', date: '12 de setembro', readingTime: 6, description: 'Aprenda a colecionar, negociar e verificar ativos digitais.' },
+  { title: '10 artistas digitais para acompanhar', image: '/artwork/emerald-ape.webp', date: '13 de setembro', readingTime: 2, description: 'Conheça criadores que moldam a cultura digital.' },
+  { title: 'Raridade, atributos e procedência', image: '/artwork/cosmic-bloom.webp', date: '15 de setembro', readingTime: 3, description: 'Entenda raridade, procedência, direitos autorais e utilidade.' },
+  { title: 'Como proteger sua carteira', image: '/artwork/golden-beat.webp', date: '15 de setembro', readingTime: 2, description: 'Proteja sua carteira, seus ativos e sua identidade.' },
 ]
 
 export function HomeSections() {
   return <>
     <section id="destaques" aria-label="Destaques da coleção" className="mx-auto mt-24 grid max-w-[1200px] scroll-mt-8 gap-6 px-5 sm:px-8 lg:grid-cols-2 lg:gap-7 xl:px-0">
       <article className="grid overflow-hidden rounded-lg bg-[#2a1a15] sm:grid-cols-2 lg:h-[250px] lg:grid-cols-[292px_minmax(0,1fr)]">
-        <img src="/artwork/emerald-ape.png" alt="Emerald Ape" loading="lazy" width="292" height="250" className="aspect-square h-full w-full rounded-[18px] object-cover lg:aspect-auto lg:h-[250px]" />
+        <img src="/artwork/emerald-ape.webp" alt="Emerald Ape" loading="lazy" width="292" height="250" className="aspect-square h-full w-full rounded-[18px] object-cover lg:aspect-auto lg:h-[250px]" />
         <div className="flex flex-col items-end justify-center p-6 text-right"><h2 className="text-lg font-bold">Lançamentos gênesis de edição limitada</h2><p className="mt-3 text-xs leading-5 text-[#cfb28c]">Colecione edições escassas diretamente dos criadores antes da revelação pública.</p><Button asChild size="sm" className="mt-4"><Link to="/nft/$nftId" params={{ nftId: 'emerald-ape-042' }}>Explorar <ArrowRight size={14} /></Link></Button></div>
       </article>
       <article className="grid overflow-hidden rounded-lg bg-[#2a1a15] sm:grid-cols-2 lg:h-[250px] lg:grid-cols-[292px_minmax(0,1fr)]">
-        <img src="/artwork/neon-vessel.png" alt="Neon Vessel" loading="lazy" width="292" height="250" className="aspect-square h-full w-full rounded-[18px] object-cover lg:aspect-auto lg:h-[250px]" />
+        <img src="/artwork/neon-vessel.webp" alt="Neon Vessel" loading="lazy" width="292" height="250" className="aspect-square h-full w-full rounded-[18px] object-cover lg:aspect-auto lg:h-[250px]" />
         <div className="flex flex-col items-end justify-center p-6 text-right"><h2 className="text-lg font-bold">Arte digital selecionada e muito mais</h2><p className="mt-3 text-xs leading-5 text-[#cfb28c]">Explore novos artistas, coleções verificadas e obras digitais que definem a cena.</p><Button asChild size="sm" className="mt-4"><Link to="/nft/$nftId" params={{ nftId: 'neon-vessel-552' }}>Explorar <ArrowRight size={14} /></Link></Button></div>
       </article>
     </section>
