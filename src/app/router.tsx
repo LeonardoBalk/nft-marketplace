@@ -1,4 +1,4 @@
-import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/react-router'
+import { createRootRoute, createRoute, createRouter, Outlet, redirect, useNavigate, useRouterState } from '@tanstack/react-router'
 import { useCallback, useMemo, useState } from 'react'
 import { CatalogPage } from './catalog-page'
 import { NftDetailPage } from './nft-detail-page'
@@ -8,12 +8,26 @@ import { WalletsPage } from './wallets-page'
 import { CheckoutPage } from './checkout-page'
 import { SiteHeader } from './site-header'
 import { AuthPage } from './auth-page'
+import { AuthGatePage } from './auth-gate-page'
+import { authSearchSchema } from '../features/auth/contracts'
 import { AuthModalContext, type AuthModalRequest } from '../features/auth/modal-context'
-import { catalogSearchSchema } from '../features/catalog/contracts'
+import { getAccessToken } from '../features/auth/session'
+import { catalogSearchSchema, defaultCatalogSearch } from '../features/catalog/contracts'
+
+// barra o fluxo privado antes de montar a tela e guarda o destino para retomar
+function requireSession({ location }: { location: { href: string } }) {
+  if (!getAccessToken()) throw redirect({ to: '/entrar', search: { mode: 'login' as const, redirect: location.href } })
+}
 
 function RootLayout() {
   const [authModal, setAuthModal] = useState<AuthModalRequest | null>(null)
-  const closeAuth = useCallback(() => setAuthModal(null), [])
+  const navigate = useNavigate()
+  const onAuthRoute = useRouterState({ select: (state) => state.location.pathname === '/entrar' })
+  const closeAuth = useCallback(() => {
+    setAuthModal(null)
+    // /entrar só existe para o modal: fechar lá tem que devolver para a inicial
+    if (onAuthRoute) void navigate({ to: '/', search: defaultCatalogSearch })
+  }, [onAuthRoute, navigate])
   const openAuth = useCallback((mode: AuthModalRequest['mode'], redirect?: string) => setAuthModal({ mode, redirect }), [])
   const authModalContext = useMemo(() => ({ openAuth, closeAuth }), [openAuth, closeAuth])
 
@@ -48,16 +62,25 @@ const cartRoute = createRoute({
   component: CartPage,
 })
 
+const authGateRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/entrar',
+  component: AuthGatePage,
+  validateSearch: (search) => authSearchSchema.parse(search),
+})
+
 const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/perfil',
   component: ProfilePage,
+  beforeLoad: requireSession,
 })
 
 const walletsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/carteiras',
   component: WalletsPage,
+  beforeLoad: requireSession,
 })
 
 const checkoutRoute = createRoute({
@@ -66,7 +89,7 @@ const checkoutRoute = createRoute({
   component: CheckoutPage,
 })
 
-export const router = createRouter({ routeTree: rootRoute.addChildren([catalogRoute, nftDetailRoute, cartRoute, checkoutRoute, profileRoute, walletsRoute]) })
+export const router = createRouter({ routeTree: rootRoute.addChildren([catalogRoute, nftDetailRoute, cartRoute, checkoutRoute, authGateRoute, profileRoute, walletsRoute]) })
 
 declare module '@tanstack/react-router' {
   interface Register {

@@ -19,8 +19,9 @@ export const registerSchema = registerRequestSchema.extend({
 })
 
 export const authSearchSchema = z.object({
-  redirect: z.string().optional(),
-}).catch({})
+  mode: z.enum(['login', 'register']).catch('login').default('login'),
+  redirect: z.string().max(200).optional(),
+})
 
 export type LoginInput = z.infer<typeof loginSchema>
 export type RegisterInput = z.infer<typeof registerSchema>
