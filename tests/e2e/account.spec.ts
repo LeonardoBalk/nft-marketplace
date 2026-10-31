@@ -80,3 +80,41 @@ test('carteiras salvam, validam endereço e persistem após refresh', async ({ p
   await page.getByRole('button', { name: 'Remover carteira secundária' }).click()
   await expect(page.getByText('Você ainda não adicionou uma carteira secundária.')).toBeVisible()
 })
+
+test('menu do avatar leva à conta e sair limpa o header e deixa a tela privada', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Entrar' }).click()
+  await signUp(page, 'menu-avatar-e2e@example.com')
+
+  const avatar = page.getByRole('button', { name: 'Menu da conta de Leonardo Balk' })
+  await expect(avatar).toHaveText('LB')
+  await avatar.click()
+  await page.getByRole('menuitem', { name: 'Carteiras' }).click()
+  await expect(page).toHaveURL(/\/carteiras/)
+
+  await avatar.click()
+  await page.getByRole('menuitem', { name: 'Sair' }).click()
+  await expect(page).toHaveURL(/\/\?/)
+  await expect(page.getByRole('button', { name: 'Entrar' })).toBeVisible()
+  await expect(avatar).toHaveCount(0)
+})
+
+test.describe('login e cadastro no mobile', () => {
+  test.use({ viewport: { width: 414, height: 896 } })
+
+  test('voltar fecha o modal e devolve à tela de origem', async ({ page }) => {
+    await page.goto('/?category=M%C3%BAsica')
+    await page.getByRole('navigation', { name: 'Navegação' }).getByRole('button', { name: 'Entrar' }).click()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+    await dialog.getByRole('button', { name: 'Voltar' }).click()
+    await expect(dialog).toBeHidden()
+    await expect(page).toHaveURL(/category=M%C3%BAsica/)
+
+    await page.goto('/entrar?mode=register')
+    await expect(dialog).toBeVisible()
+    await dialog.getByRole('button', { name: 'Voltar' }).click()
+    await expect(dialog).toBeHidden()
+    await expect(page).toHaveURL(/\/\?/)
+  })
+})
