@@ -1,17 +1,24 @@
 import { z } from 'zod'
+import { editions, type NftEdition } from '../features/catalog/contracts'
 import type { AuthUser } from '../features/auth/contracts'
-import type { CartSummary, OrderReceipt } from '../features/cart/contracts'
+import { cartQuoteFingerprint, type CartSummary, type OrderRecord, type OrderReceipt, type WalletProvider } from '../features/cart/contracts'
 import { ethToWei } from '../shared/money/eth'
 import { getNft } from './catalog'
 
 const storeKey = 'kurio.demo.commerce.v1'
 const storeSchema = z.object({
-  carts: z.record(z.string(), z.array(z.object({ nftId: z.string(), quantity: z.number().int().positive() }))),
+  carts: z.record(z.string(), z.array(z.object({ nftId: z.string(), edition: z.enum(editions).default('1/50'), quantity: z.number().int().positive() }))),
   coupons: z.record(z.string(), z.string().nullable()),
+  walletConnections: z.record(z.string(), z.object({ provider: z.string(), connectionId: z.string() })).default({}),
   orders: z.record(z.string(), z.object({
     owner: z.string(),
     fingerprint: z.string(),
     receipt: z.unknown(),
+    settleAt: z.string().nullable().default(null),
+    outcome: z.enum(['confirmed', 'declined']).default('confirmed'),
+    deliverEvents: z.boolean().default(true),
+    duplicateEvents: z.boolean().default(false),
+    staleEvent: z.boolean().default(false),
   })).default({}),
 })
 type CommerceStore = z.infer<typeof storeSchema>
@@ -22,9 +29,9 @@ function loadStore(): CommerceStore {
     const parsed = raw ? storeSchema.safeParse(JSON.parse(raw)) : null
     if (parsed?.success) return parsed.data
   } catch {
-    return { carts: {}, coupons: {}, orders: {} }
+    return { carts: {}, coupons: {}, walletConnections: {}, orders: {} }
   }
-  return { carts: {}, coupons: {}, orders: {} }
+  return { carts: {}, coupons: {}, walletConnections: {}, orders: {} }
 }
 
 function saveStore(store: CommerceStore): void {
@@ -38,7 +45,7 @@ export function cartOwner(user: AuthUser | null, guestId: string | null): string
 
 function formatWei(value: bigint): string {
   const whole = value / 10n ** 18n
-  const fraction = (value % 10n ** 18n).toString().padStart(18, '0').slice(0, 6).replace(/0+$/, '')
+  const fraction = (value % 10n ** 18n).toString().padStart(18, '0').replace(/0+$/, '')
   return fraction ? `${whole}.${fraction}` : whole.toString()
 }
 
@@ -48,7 +55,7 @@ export function readCart(owner: string): CartSummary {
     const nft = getNft(entry.nftId)
     if (!nft) return []
     const lineTotal = ethToWei(nft.priceEth) * BigInt(entry.quantity)
-    return [{ nft, quantity: entry.quantity, lineTotalEth: formatWei(lineTotal) }]
+    return [{ nft, edition: entry.edition, quantity: entry.quantity, lineTotalEth: formatWei(lineTotal) }]
   })
   const subtotal = lines.reduce((sum, line) => sum + ethToWei(line.nft.priceEth) * BigInt(line.quantity), 0n)
   const couponCode = store.coupons[owner] ?? null
@@ -65,36 +72,38 @@ export function readCart(owner: string): CartSummary {
   }
 }
 
-export function addCartItem(owner: string, nftId: string, quantity: number): CartSummary | 'NFT_NOT_FOUND' | 'OUT_OF_STOCK' {
+export function addCartItem(owner: string, nftId: string, quantity: number, edition: NftEdition = '1/50'): CartSummary | 'NFT_NOT_FOUND' | 'OUT_OF_STOCK' {
   const nft = getNft(nftId)
   if (!nft) return 'NFT_NOT_FOUND'
   const store = loadStore()
   const items = store.carts[owner] ?? []
-  const existing = items.find((entry) => entry.nftId === nftId)
+  const existing = items.find((entry) => entry.nftId === nftId && entry.edition === edition)
   const nextQuantity = (existing?.quantity ?? 0) + quantity
-  if (nextQuantity > nft.available) return 'OUT_OF_STOCK'
+  if (nextQuantity > nft.editionAvailability[edition] || items.filter((entry) => entry.nftId === nftId).reduce((sum, entry) => sum + entry.quantity, 0) + quantity > nft.available) return 'OUT_OF_STOCK'
   store.carts[owner] = existing
-    ? items.map((entry) => entry.nftId === nftId ? { ...entry, quantity: nextQuantity } : entry)
-    : [...items, { nftId, quantity }]
+    ? items.map((entry) => entry.nftId === nftId && entry.edition === edition ? { ...entry, quantity: nextQuantity } : entry)
+    : [...items, { nftId, edition, quantity }]
   saveStore(store)
   return readCart(owner)
 }
 
-export function updateCartItem(owner: string, nftId: string, quantity: number): CartSummary | 'NFT_NOT_FOUND' | 'OUT_OF_STOCK' {
+export function updateCartItem(owner: string, nftId: string, quantity: number, edition: NftEdition = '1/50'): CartSummary | 'NFT_NOT_FOUND' | 'OUT_OF_STOCK' {
   const nft = getNft(nftId)
   if (!nft) return 'NFT_NOT_FOUND'
-  if (quantity > nft.available) return 'OUT_OF_STOCK'
   const store = loadStore()
   const items = store.carts[owner] ?? []
-  if (!items.some((entry) => entry.nftId === nftId)) return 'NFT_NOT_FOUND'
-  store.carts[owner] = items.map((entry) => entry.nftId === nftId ? { ...entry, quantity } : entry)
+  const otherQuantity = items.filter((entry) => entry.nftId === nftId && entry.edition !== edition).reduce((sum, entry) => sum + entry.quantity, 0)
+  const existing = items.find((entry) => entry.nftId === nftId && entry.edition === edition)
+  if (!existing) return 'NFT_NOT_FOUND'
+  if (quantity > existing.quantity && (quantity > nft.editionAvailability[edition] || quantity + otherQuantity > nft.available)) return 'OUT_OF_STOCK'
+  store.carts[owner] = items.map((entry) => entry.nftId === nftId && entry.edition === edition ? { ...entry, quantity } : entry)
   saveStore(store)
   return readCart(owner)
 }
 
-export function removeCartItem(owner: string, nftId: string): CartSummary {
+export function removeCartItem(owner: string, nftId: string, edition: NftEdition = '1/50'): CartSummary {
   const store = loadStore()
-  store.carts[owner] = (store.carts[owner] ?? []).filter((entry) => entry.nftId !== nftId)
+  store.carts[owner] = (store.carts[owner] ?? []).filter((entry) => entry.nftId !== nftId || entry.edition !== edition)
   saveStore(store)
   return readCart(owner)
 }
@@ -126,10 +135,11 @@ export function mergeGuestCart(user: AuthUser, guestId: string | null): CartSumm
   for (const guestItem of guestItems) {
     const nft = getNft(guestItem.nftId)
     if (!nft) continue
-    const existing = userItems.find((entry) => entry.nftId === guestItem.nftId)
-    const quantity = Math.min(nft.available, guestItem.quantity + (existing?.quantity ?? 0))
+    const existing = userItems.find((entry) => entry.nftId === guestItem.nftId && entry.edition === guestItem.edition)
+    // Preserve guest items even when stock changed; checkout requires adjustment.
+    const quantity = guestItem.quantity + (existing?.quantity ?? 0)
     if (existing) {
-      const index = userItems.findIndex((entry) => entry.nftId === guestItem.nftId)
+      const index = userItems.findIndex((entry) => entry.nftId === guestItem.nftId && entry.edition === guestItem.edition)
       userItems[index] = { ...existing, quantity }
     } else {
       userItems.push({ ...guestItem, quantity })
@@ -145,51 +155,144 @@ export function mergeGuestCart(user: AuthUser, guestId: string | null): CartSumm
 export interface OrderDetails {
   wallet: OrderReceipt['wallet']
   network: OrderReceipt['network']
+  provider: WalletProvider
+}
+
+export function connectMockWallet(owner: string, provider: WalletProvider): string {
+  const store = loadStore()
+  const connectionId = crypto.randomUUID()
+  store.walletConnections[owner] = { provider, connectionId }
+  saveStore(store)
+  return connectionId
+}
+
+export function disconnectMockWallet(owner: string): void {
+  const store = loadStore()
+  delete store.walletConnections[owner]
+  saveStore(store)
 }
 
 export type OrderResult =
-  | { status: 'created' | 'replayed'; receipt: OrderReceipt }
+  | { status: 'created' | 'replayed'; order: OrderRecord }
   | 'CART_EMPTY'
+  | 'QUOTE_CHANGED'
+  | 'OUT_OF_STOCK'
+  | 'WALLET_NOT_CONNECTED'
+  | 'WALLET_DISCONNECTED'
   | 'IDEMPOTENCY_CONFLICT'
 
-// mesma chave recupera o mesmo pedido; chave reutilizada com outro conteúdo é conflito
-export function createOrder(owner: string, idempotencyKey: string, fingerprint: string, details: OrderDetails): OrderResult {
+export function createOrder(owner: string, idempotencyKey: string, fingerprint: string, expectedQuote: string, connectionId: string, details: OrderDetails, settleAt: string, outcome: 'confirmed' | 'declined', deliverEvents = true, duplicateEvents = false, staleEvent = false, disconnectDuringCheckout = false): OrderResult {
   const store = loadStore()
   const existing = store.orders[idempotencyKey]
   if (existing) {
     if (existing.owner !== owner || existing.fingerprint !== fingerprint) return 'IDEMPOTENCY_CONFLICT'
-    return { status: 'replayed', receipt: existing.receipt as OrderReceipt }
+    return { status: 'replayed', order: normalizeOrder(existing.receipt) }
+  }
+
+  if (disconnectDuringCheckout) {
+    delete store.walletConnections[owner]
+    saveStore(store)
+    return 'WALLET_DISCONNECTED'
   }
 
   const summary = readCart(owner)
   if (!summary.items.length) return 'CART_EMPTY'
+  const connection = store.walletConnections[owner]
+  if (!connection || connection.connectionId !== connectionId || connection.provider !== details.provider) return 'WALLET_NOT_CONNECTED'
+  if (cartQuoteFingerprint(summary) !== expectedQuote) return 'QUOTE_CHANGED'
+  if (summary.items.some((line) => line.quantity > line.nft.editionAvailability[line.edition] || summary.items.filter((other) => other.nft.id === line.nft.id).reduce((sum, other) => sum + other.quantity, 0) > line.nft.available)) return 'OUT_OF_STOCK'
 
-  const receipt: OrderReceipt = {
-    orderId: `KURIO-${Date.now().toString(36).toUpperCase()}`,
-    transactionHash: `0x${crypto.randomUUID().replace(/-/g, '').toUpperCase().slice(0, 40)}`,
+  const order: OrderRecord = {
+    orderId: `KURIO-${Date.now().toString(36).toUpperCase()}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
+    status: 'pending',
+    version: 1,
+    transactionHash: null,
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     wallet: details.wallet,
     network: details.network,
-    // snapshot: mudança posterior no catálogo não altera o recibo
     summary,
   }
 
-  delete store.carts[owner]
-  delete store.coupons[owner]
-  store.orders[idempotencyKey] = { owner, fingerprint, receipt }
+  store.orders[idempotencyKey] = { owner, fingerprint, receipt: order, settleAt, outcome, deliverEvents, duplicateEvents, staleEvent }
   saveStore(store)
-  return { status: 'created', receipt }
+  return { status: 'created', order }
 }
 
-export function getOrder(owner: string, orderId: string): OrderReceipt | null {
+function normalizeOrder(value: unknown): OrderRecord {
+  const saved = value as Partial<OrderRecord> & Pick<OrderReceipt, 'orderId' | 'transactionHash' | 'createdAt' | 'wallet' | 'network' | 'summary'>
+  if (saved.status) return saved as OrderRecord
+  return {
+    ...saved,
+    status: 'confirmed',
+    version: 2,
+    updatedAt: saved.createdAt,
+    transactionHash: saved.transactionHash,
+  } as OrderRecord
+}
+
+export function getOrder(owner: string, orderId: string): OrderRecord | null {
   const store = loadStore()
   for (const entry of Object.values(store.orders)) {
-    const receipt = entry.receipt as OrderReceipt
-    if (entry.owner === owner && receipt.orderId === orderId) return receipt
+    const order = normalizeOrder(entry.receipt)
+    if (entry.owner === owner && order.orderId === orderId) return order
   }
   return null
 }
 
+export function pendingOrder(owner: string, orderId: string): { order: OrderRecord; settleAt: string; outcome: 'confirmed' | 'declined'; deliverEvents: boolean; duplicateEvents: boolean; staleEvent: boolean } | null {
+  const store = loadStore()
+  for (const entry of Object.values(store.orders)) {
+    const order = normalizeOrder(entry.receipt)
+    if (entry.owner === owner && order.orderId === orderId && order.status === 'pending' && entry.settleAt) {
+      return { order, settleAt: entry.settleAt, outcome: entry.outcome, deliverEvents: entry.deliverEvents, duplicateEvents: entry.duplicateEvents, staleEvent: entry.staleEvent }
+    }
+  }
+  return null
+}
+
+export function finishOrder(owner: string, orderId: string, status: 'confirmed' | 'declined', declineReason?: string): OrderRecord | null {
+  const store = loadStore()
+  const entry = Object.values(store.orders).find((candidate) => {
+    const order = normalizeOrder(candidate.receipt)
+    return candidate.owner === owner && order.orderId === orderId
+  })
+  if (!entry) return null
+  const current = normalizeOrder(entry.receipt)
+  if (current.status !== 'pending') return current
+
+  const updated: OrderRecord = {
+    ...current,
+    status,
+    version: current.version + 1,
+    updatedAt: new Date().toISOString(),
+    transactionHash: status === 'confirmed' ? `0x${crypto.randomUUID().replace(/-/g, '').toUpperCase().slice(0, 40)}` : null,
+    ...(status === 'declined' && declineReason ? { declineReason } : {}),
+  }
+
+  if (status === 'confirmed') {
+    const purchased = new Map(current.summary.items.map((line) => [`${line.nft.id}:${line.edition ?? '1/50'}`, line.quantity]))
+    const remaining = (store.carts[owner] ?? []).flatMap((line) => {
+      const quantity = line.quantity - (purchased.get(`${line.nftId}:${line.edition}`) ?? 0)
+      return quantity > 0 ? [{ ...line, quantity }] : []
+    })
+    if (remaining.length) store.carts[owner] = remaining
+    else {
+      delete store.carts[owner]
+      delete store.coupons[owner]
+    }
+  }
+
+  entry.receipt = updated
+  entry.settleAt = null
+  saveStore(store)
+  return updated
+}
+
 export function resolveCartOwner(user: AuthUser | null, request: Request): string | null {
   return cartOwner(user, request.headers.get('x-guest-id'))
+}
+
+export function resetCommerceStore(): void {
+  localStorage.removeItem(storeKey)
 }

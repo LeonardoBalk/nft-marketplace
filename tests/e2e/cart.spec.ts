@@ -42,7 +42,7 @@ test('cupom expirado e inválido são tratados no carrinho', async ({ page }) =>
   await page.getByLabel('Código promocional').fill('KURIO10')
   await page.getByRole('button', { name: 'Aplicar' }).click()
   await expect(page.getByText('Cupom KURIO10 aplicado.')).toBeVisible()
-  await expect(page.getByText('(-) 0.10')).toBeVisible()
+  await expect(page.getByText('(-) 0.099')).toBeVisible()
 })
 
 test('conectar e finalizar pede login quando o visitante não tem sessão', async ({ page }) => {
@@ -126,4 +126,41 @@ test('carrinho de visitante soma ao carrinho que a conta já tinha ao fazer logi
   await expect(page.getByRole('status', { name: 'Quantidade de Golden Beat #207' })).toHaveText('1')
   await page.reload()
   await expect(page.getByRole('status', { name: 'Quantidade de Emerald Ape #042' })).toHaveText('2')
+})
+
+test('edições distintas persistem e respeitam seus limites no carrinho', async ({ page }) => {
+  await page.goto('/nft/emerald-ape-042')
+  await page.getByRole('button', { name: '1/1', exact: true }).click()
+  await page.getByRole('button', { name: 'COMPRAR' }).click()
+  await expect(page.getByText(/Edi\u00e7\u00e3o: 1\/1$/)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Aumentar quantidade de Emerald Ape #042' })).toBeDisabled()
+  await page.goto('/nft/emerald-ape-042')
+  await page.getByRole('button', { name: '1/10', exact: true }).click()
+  await page.getByRole('button', { name: 'COMPRAR' }).click()
+  await expect(page.getByText(/Edi\u00e7\u00e3o: 1\/1$/)).toBeVisible()
+  await expect(page.getByText('Edição: 1/10')).toBeVisible()
+  await page.reload()
+  await expect(page.getByText(/Edi\u00e7\u00e3o: 1\/1$/)).toBeVisible()
+  await expect(page.getByText('Edição: 1/10')).toBeVisible()
+  const statuses = await page.evaluate(async () => {
+    const guest = localStorage.getItem('kurio.demo.guest-id.v1') ?? ''
+    const headers = { 'content-type': 'application/json', 'x-guest-id': guest }
+    const add = await fetch('/api/cart/items', { method: 'POST', headers, body: JSON.stringify({ nftId: 'emerald-ape-042', edition: '1/1', quantity: 1 }) })
+    const patch = await fetch('/api/cart/items/emerald-ape-042', { method: 'PATCH', headers, body: JSON.stringify({ edition: '1/1', quantity: 2 }) })
+    return [add.status, patch.status]
+  })
+  expect(statuses).toEqual([409, 409])
+})
+
+test('cotação e apresentação preservam 18 casas decimais', async ({ page }) => {
+  await page.goto('/nft/emerald-ape-042')
+  await expect(page.getByRole('heading', { name: 'Emerald Ape #042' })).toBeVisible()
+  await page.evaluate(async () => {
+    await fetch('/api/demo/nfts/emerald-ape-042/price', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ priceEth: '0.000000000000000123' }) })
+  })
+  await page.reload()
+  await expect(page.getByText('0.000000000000000123 ETH').first()).toBeVisible()
+  await page.getByRole('button', { name: 'COMPRAR' }).click()
+  await expect(page.getByText('0.000000000000000123 ETH').first()).toBeVisible()
+  await expect(page.getByText('0.005000000000000123 ETH')).toBeVisible()
 })

@@ -1,3 +1,4 @@
+import { formatEth } from '../shared/money/eth'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { isAxiosError } from 'axios'
@@ -10,15 +11,16 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
-import { OrderReceiptDialog } from './order-receipt-dialog'
+import { MobileCheckout } from './mobile-checkout'
 import { SiteFooter } from './site-footer'
 import type { WalletSlot } from '../features/account/contracts'
 import { useProfile, useWallets } from '../features/account/queries'
 import { useAuthModal } from '../features/auth/modal-context'
 import { useAuthSession } from '../features/auth/queries'
-import { checkoutSchema, ensSuffixes, walletNetworks, walletTypes, type CartSummary, type CheckoutRequest, type OrderReceipt } from '../features/cart/contracts'
-import { cartQuery, useApplyCoupon, useCart, useCheckout } from '../features/cart/queries'
+import { cartQuoteFingerprint, checkoutSchema, ensSuffixes, walletNetworks, walletTypes, type CartSummary, type CheckoutRequest } from '../features/cart/contracts'
+import { cartQuery, useApplyCoupon, useCart, useCheckout, useConnectWallet } from '../features/cart/queries'
 import { defaultCatalogSearch } from '../features/catalog/contracts'
+import { useMediaQuery } from '../shared/ui/use-media-query'
 
 const pageShell = 'mx-auto max-w-[1200px] px-5 sm:px-8 xl:px-0'
 const networkLabels: Record<(typeof walletNetworks)[number], string> = { ethereum: 'Ethereum', polygon: 'Polygon', solana: 'Solana' }
@@ -29,14 +31,9 @@ const walletProviderOptions = [
   { value: 'coinbase', label: 'Coinbase Wallet' },
 ] as const
 
-function formatEth(value: string | undefined) {
-  return Number(value ?? 0).toFixed(2)
-}
-
-// assinatura da cotação: muda a cada alteração de preço, taxa, cupom ou item
+// assinatura da cotação: também cobre disponibilidade e versão de cada NFT
 function quoteOf(cart: CartSummary | undefined | null) {
-  if (!cart) return null
-  return [cart.itemCount, cart.subtotalEth, cart.discountEth, cart.networkFeeEth, cart.totalEth, cart.couponCode ?? ''].join('|')
+  return cart ? cartQuoteFingerprint(cart) : null
 }
 
 function tokenId(nftId: string) {
@@ -73,6 +70,7 @@ export function CheckoutPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const checkout = useCheckout()
+  const connectWallet = useConnectWallet()
   const coupon = useApplyCoupon()
   const wallets = useWallets(Boolean(user))
   const profile = useProfile(Boolean(user))
@@ -80,11 +78,17 @@ export function CheckoutPage() {
   const [couponOpen, setCouponOpen] = useState(false)
   const [walletProvider, setWalletProvider] = useState<string>('coinbase')
   const [walletSlot, setWalletSlot] = useState<WalletSlot>('primary')
-  const [receipt, setReceipt] = useState<OrderReceipt | null>(null)
   const [reviewedQuote, setReviewedQuote] = useState<string | null>(null)
-  const idempotencyKey = useRef<string | null>(null)
+  const idempotencyKey = useRef<string | null>(typeof window === 'undefined' ? null : sessionStorage.getItem('kurio.checkout.idempotency.v1'))
+  const [savedWalletError, setSavedWalletError] = useState<string | null>(null)
+  const [preflightError, setPreflightError] = useState<string | null>(null)
+  const [preflightPending, setPreflightPending] = useState(false)
+  const confirmingRef = useRef(false)
+  const [connectedWallet, setConnectedWallet] = useState<{ provider: string; connectionId: string } | null>(null)
+  const [walletConnectionError, setWalletConnectionError] = useState<string | null>(null)
+  const isDesktop = useMediaQuery('(min-width: 768px)')
 
-  const savedWallet = (walletSlot === 'secondary' ? wallets.data?.secondary : wallets.data?.primary) ?? null
+  const savedWallet = (walletSlot === 'secondary' ? wallets.data?.secondary ?? wallets.data?.primary : wallets.data?.primary ?? wallets.data?.secondary) ?? null
   const currentQuote = quoteOf(cart)
   const quoteChanged = reviewedQuote !== null && currentQuote !== null && currentQuote !== reviewedQuote
 
@@ -92,6 +96,98 @@ export function CheckoutPage() {
     // a primeira cotação vista vira a referência; mudança pede nova confirmação
     if (currentQuote !== null && reviewedQuote === null) setReviewedQuote(currentQuote)
   }, [currentQuote, reviewedQuote])
+
+  // o form do desktop e as carteiras do mobile chegam aqui com o pedido já validado
+  const confirmPurchase = async (input: CheckoutRequest) => {
+    if (!user) {
+      openAuth('login', '/checkout')
+      return
+    }
+
+    if (confirmingRef.current) return
+    confirmingRef.current = true
+    try {
+    setPreflightError(null)
+    setWalletConnectionError(null)
+    setPreflightPending(true)
+    let connectionId = connectedWallet?.provider === walletProvider ? connectedWallet.connectionId : null
+    if (!connectionId) {
+      try {
+        const connection = await connectWallet.mutateAsync(walletProvider)
+        connectionId = connection.connectionId
+        setConnectedWallet({ provider: walletProvider, connectionId })
+      } catch (error) {
+        setWalletConnectionError(isAxiosError<{ message?: string }>(error) ? error.response?.data?.message ?? 'Não foi possível conectar a carteira.' : 'Não foi possível conectar a carteira.')
+        setPreflightPending(false)
+        return
+      }
+    }
+
+    // revalidar a cotação antes de cobrar; se mudou, o aviso aparece e o envio para
+    let fresh: CartSummary
+    try {
+      fresh = await queryClient.fetchQuery({ ...cartQuery(), staleTime: 0 })
+    } catch {
+      setPreflightError('Não foi possível atualizar os valores. Tente novamente antes de pagar.')
+      setPreflightPending(false)
+      return
+    }
+    setPreflightPending(false)
+    const expectedQuote = reviewedQuote
+    if (!expectedQuote || quoteOf(fresh) !== expectedQuote) return
+    if (!connectionId) return
+
+    // a chave só troca após pedido concluído: resposta perdida recupera o mesmo pedido
+    idempotencyKey.current ??= crypto.randomUUID()
+    sessionStorage.setItem('kurio.checkout.idempotency.v1', idempotencyKey.current)
+
+    try {
+      const order = await checkout.mutateAsync({ input, idempotencyKey: idempotencyKey.current, expectedQuote, connectionId })
+      idempotencyKey.current = null
+      sessionStorage.removeItem('kurio.checkout.idempotency.v1')
+      // replace: voltar depois da compra não pode cair num pagamento com o carrinho já vazio
+      void navigate({ to: '/pedido/$orderId', params: { orderId: order.orderId }, replace: true })
+    } catch (error) {
+      // retomar checkout sem perder o carrinho
+      if (isAxiosError(error) && error.response?.status === 401) openAuth('login', '/checkout')
+      if (isAxiosError(error) && error.response?.data?.code === 'WALLET_DISCONNECTED') {
+        setConnectedWallet(null)
+        setWalletConnectionError(error.response.data.message ?? 'A conexão com a carteira foi interrompida. Conecte novamente para continuar.')
+      }
+      if (isAxiosError(error) && error.response?.status === 409 && error.response.data?.code === 'QUOTE_CHANGED') {
+        void queryClient.invalidateQueries({ queryKey: ['cart'] })
+      }
+    }
+    } finally {
+      confirmingRef.current = false
+    }
+  }
+
+  // no mobile não há form: o pedido sai da carteira escolhida e do perfil
+  const confirmWithSavedWallet = () => {
+    setSavedWalletError(null)
+    if (!savedWallet) return
+    const parsed = checkoutSchema.safeParse({
+      displayName: savedWallet.displayName,
+      username: profile.data?.username ?? '',
+      network: savedWallet.network,
+      profileName: savedWallet.profileName,
+      walletAddress: savedWallet.address,
+      secondaryWallet: savedWallet.secondaryAddress,
+      walletType: savedWallet.type,
+      referralCode: savedWallet.referralCode,
+      email: savedWallet.email,
+      ensSuffix: savedWallet.ensSuffix,
+      useOtherWallet: false,
+      note: '',
+      walletProvider,
+    })
+    if (!parsed.success) {
+      setSavedWalletError('Complete os dados desta carteira em Carteiras para pagar com ela.')
+      return
+    }
+    void confirmPurchase(parsed.data as CheckoutRequest)
+  }
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -108,25 +204,7 @@ export function CheckoutPage() {
       return
     }
 
-    if (!user) {
-      openAuth('login', '/checkout')
-      return
-    }
-
-    // revalidar a cotação antes de cobrar; se mudou, o aviso aparece e o envio para
-    const fresh = await queryClient.fetchQuery({ ...cartQuery(), staleTime: 0 })
-    if (quoteOf(fresh) !== reviewedQuote) return
-
-    // a chave só troca após pedido concluído: resposta perdida recupera o mesmo pedido
-    idempotencyKey.current ??= crypto.randomUUID()
-
-    try {
-      setReceipt(await checkout.mutateAsync({ input: parsed.data as CheckoutRequest, idempotencyKey: idempotencyKey.current }))
-      idempotencyKey.current = null
-    } catch (error) {
-      // retomar checkout sem perder o carrinho
-      if (isAxiosError(error) && error.response?.status === 401) openAuth('login', '/checkout')
-    }
+    await confirmPurchase(parsed.data as CheckoutRequest)
   }
 
   const applyCoupon = (event: FormEvent<HTMLFormElement>) => {
@@ -139,6 +217,27 @@ export function CheckoutPage() {
   const checkoutError = isAxiosError<{ message?: string }>(checkout.error) ? checkout.error.response?.data?.message ?? 'Não foi possível concluir a compra.' : null
   const couponError = isAxiosError<{ message?: string }>(coupon.error) ? coupon.error.response?.data?.message ?? 'Não foi possível aplicar o cupom.' : null
   const items = cart?.items ?? []
+
+  // o frame mobile troca o form pelas carteiras salvas; a confirmação é a mesma
+  if (!isDesktop) return <>
+    <MobileCheckout
+      signedIn={Boolean(user)}
+      wallets={wallets.data}
+      walletsPending={Boolean(user) && wallets.isPending}
+      selectedSlot={savedWallet?.slot ?? walletSlot}
+      onSelectSlot={(slot) => { setSavedWalletError(null); setWalletSlot(slot) }}
+      provider={walletProvider}
+      onSelectProvider={(provider) => { setWalletProvider(provider); setConnectedWallet(null); setWalletConnectionError(null) }}
+      totalEth={cart?.totalEth}
+      quoteChanged={quoteChanged}
+      onReviewQuote={() => setReviewedQuote(currentQuote)}
+      canConfirm={items.length > 0 && Boolean(savedWallet) && !checkout.isPending && !preflightPending && !quoteChanged}
+      confirming={checkout.isPending || preflightPending}
+      error={savedWalletError ?? walletConnectionError ?? checkoutError ?? preflightError}
+      onConfirm={confirmWithSavedWallet}
+      onSignIn={() => openAuth('login', '/checkout')}
+    />
+  </>
 
   return <>
     <main className={`${pageShell} pb-6 pt-8`}>
@@ -203,7 +302,7 @@ export function CheckoutPage() {
             </div>
             <div className="flex flex-col gap-3 sm:col-span-2">
               <Label htmlFor="note">Observação do colecionador (opcional)</Label>
-              <Textarea id="note" name="note" maxLength={500} rows={6} className="max-w-[350px]" />
+              <Textarea id="note" name="note" maxLength={500} rows={6} className="max-h-60 max-w-[350px] resize-y overflow-y-auto" />
             </div>
           </form>
         </section>
@@ -221,11 +320,11 @@ export function CheckoutPage() {
             : items.length === 0
               ? <p className="text-sm leading-6 text-[#cfb28c]">Seu carrinho está vazio. <Link to="/" search={defaultCatalogSearch} hash="catalogo" className="text-[#e89b55] underline">Explore o mercado</Link> para escolher uma peça.</p>
               : <ul className="flex flex-col gap-3">
-                {items.map((line) => <li key={line.nft.id} className="flex items-center gap-2 bg-[#241612] py-1 pl-1 pr-3">
+                {items.map((line) => <li key={`${line.nft.id}:${line.edition}`} className="flex items-center gap-2 bg-[#241612] py-1 pl-1 pr-3">
                   <img src={line.nft.artwork} alt="" loading="lazy" width="70" height="70" className="size-[70px] shrink-0 rounded-lg object-cover" />
                   <div className="flex min-w-0 flex-1 flex-col gap-[6px]">
                     <p className="truncate text-[15px] font-bold leading-4">{line.nft.name}</p>
-                    <p className="text-sm leading-4 text-[#b39463]">ID do token: {tokenId(line.nft.id)}</p>
+                    <p className="text-sm leading-4 text-[#b39463]">ID do token: {tokenId(line.nft.id)} · Edição: {line.edition}</p>
                   </div>
                   <span className="shrink-0 text-sm leading-4 text-[#cfb28c]">(x {line.quantity})</span>
                   <span className="shrink-0 whitespace-nowrap text-right text-[18px] font-bold leading-4 text-[#e89b55] tabular-nums">{line.lineTotalEth} ETH</span>
@@ -264,7 +363,7 @@ export function CheckoutPage() {
           </div>
 
           <h3 className="mt-5 text-center text-[17px] font-bold leading-4">Carteira e rede</h3>
-          <RadioGroup aria-label="Carteira e rede" value={walletProvider} onValueChange={setWalletProvider} className="gap-4">
+          <RadioGroup aria-label="Carteira e rede" value={walletProvider} onValueChange={(provider) => { setWalletProvider(provider); setConnectedWallet(null); setWalletConnectionError(null) }} className="gap-4">
             {walletProviderOptions.map((option, index) => <Label key={option.value} htmlFor={`wallet-${option.value}`} className={`h-[45px] cursor-pointer gap-[10px] rounded-[3px] border px-3 leading-5 transition-colors ${walletProvider === option.value ? 'border-[#d28a4c]' : 'border-[#3f2319]'}`}>
               <RadioGroupItem id={`wallet-${option.value}`} value={option.value} />
               {index === 0
@@ -279,14 +378,13 @@ export function CheckoutPage() {
             <Button type="button" variant="outline" onClick={() => setReviewedQuote(currentQuote)} className="h-9 min-h-0 w-fit rounded-[6px] border-[#d28a4c] px-4 text-sm font-bold text-[#e89b55]">Revisar e continuar</Button>
           </div>}
 
-          <Button type="submit" form="checkout-form" disabled={checkout.isPending || items.length === 0 || quoteChanged} className="mt-1 h-[45px] w-full min-h-0 rounded-[6px] text-base font-bold">{checkout.isPending ? 'Confirmando…' : 'Confirmar compra'}</Button>
-          {checkoutError && <p role="alert" className="text-xs text-[#ffb59c]">{checkoutError}</p>}
+          <Button type="submit" form="checkout-form" disabled={checkout.isPending || preflightPending || items.length === 0 || quoteChanged} className="mt-1 h-[45px] w-full min-h-0 rounded-[6px] text-base font-bold">{preflightPending ? 'Atualizando valores…' : checkout.isPending ? 'Confirmando…' : 'Confirmar compra'}</Button>
+          {(walletConnectionError ?? checkoutError ?? preflightError) && <p role="alert" className="text-xs text-[#ffb59c]">{walletConnectionError ?? checkoutError ?? preflightError}</p>}
           {!user && <p className="text-xs leading-5 text-[#cfb28c]">Você entra na conta ao confirmar; o carrinho continua o mesmo depois disso.</p>}
           <Link to="/" search={defaultCatalogSearch} hash="catalogo" className="text-center text-[15px] leading-5 text-[#e89b55] transition-colors hover:text-[#f5f1eb] focus-visible:outline-2 focus-visible:outline-[#d28a4c]">Continuar explorando</Link>
         </section>
       </div>
     </main>
     <SiteFooter />
-    {receipt && <OrderReceiptDialog receipt={receipt} onClose={() => { setReceipt(null); void navigate({ to: '/', search: defaultCatalogSearch, hash: 'catalogo' }) }} />}
   </>
 }

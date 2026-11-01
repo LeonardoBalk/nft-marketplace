@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { X } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import type { OrderReceipt } from '../features/cart/contracts'
@@ -32,83 +32,62 @@ function ThankYouMark() {
   )
 }
 
-export function OrderReceiptDialog({ receipt, onClose }: { receipt: OrderReceipt; onClose: () => void }) {
-  const dialogRef = useRef<HTMLDialogElement>(null)
+// o recibo da página de confirmação; reproduz o snapshot do pedido, não o catálogo atual
+export function OrderReceiptCard({ receipt, onClose }: { receipt: OrderReceipt; onClose: () => void }) {
   const [explorerNotice, setExplorerNotice] = useState(false)
-  const close = useCallback(() => onClose(), [onClose])
-
-  useEffect(() => {
-    const dialog = dialogRef.current
-    if (!dialog) return
-    if (!dialog.open) dialog.showModal()
-    dialog.focus({ preventScroll: true })
-    const onCancel = (event: Event) => {
-      event.preventDefault()
-      close()
-    }
-    dialog.addEventListener('cancel', onCancel)
-    return () => {
-      dialog.removeEventListener('cancel', onCancel)
-      if (dialog.open) dialog.close()
-    }
-  }, [close])
-
   const { summary } = receipt
 
   return (
-    <dialog
-      ref={dialogRef}
-      tabIndex={-1}
-      aria-labelledby="receipt-title"
-      aria-modal="true"
-      onClick={(event) => { if (event.target === event.currentTarget) close() }}
-      className="fixed inset-0 m-auto max-h-[calc(100dvh-32px)] w-[min(697px,calc(100vw-32px))] overflow-y-auto rounded-lg border-0 bg-[#241612] p-0 text-[#f5f1eb] shadow-[0_18px_70px_rgba(0,0,0,0.55)] outline-none backdrop:bg-black/70"
-    >
+    <article aria-labelledby="receipt-title" className="w-full max-w-[697px] overflow-hidden rounded-lg bg-[#241612] text-[#f5f1eb] shadow-[0_18px_70px_rgba(0,0,0,0.55)]">
       <div className="relative flex flex-col gap-5 px-6 pb-0 pt-10 sm:px-12">
-        <button type="button" aria-label="Fechar" onClick={close} className="absolute right-4 top-4 inline-flex size-6 cursor-pointer items-center justify-center text-[#d28a4c] transition-colors hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-[#d28a4c]"><X size={20} strokeWidth={1.8} /></button>
+        <button type="button" aria-label="Fechar" onClick={onClose} className="absolute right-4 top-4 inline-flex size-6 cursor-pointer items-center justify-center text-[#d28a4c] transition-colors hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-[#d28a4c]"><X size={20} strokeWidth={1.8} /></button>
 
         <div className="flex flex-col items-center gap-4">
           <ThankYouMark />
-          <h2 id="receipt-title" className="text-center text-[17px] font-bold leading-5 text-[#e89b55]">Seus NFTs agora estão na sua carteira</h2>
+          <h1 id="receipt-title" className="text-center text-[17px] font-bold leading-5 text-[#e89b55]">Seus NFTs agora estão na sua carteira</h1>
         </div>
 
-        <dl className="grid grid-cols-2 gap-y-4 border-y border-[#d28a4c] py-4 text-[15px] leading-5 sm:grid-cols-4 sm:divide-x sm:divide-[#3f2319]">
-          <div className="flex flex-col gap-1 sm:px-4 sm:first:pl-0">
+        {/* faixa de borda a borda como no frame: anula o padding do cartão e as colunas seguem o conteúdo */}
+        <dl className="-mx-6 grid grid-cols-2 gap-y-4 border-y border-[#d28a4c] px-6 py-4 text-[15px] leading-5 sm:-mx-12 sm:flex sm:justify-between sm:divide-x sm:divide-[#3f2319] sm:px-11">
+          <div className="flex flex-col gap-1 whitespace-nowrap sm:px-5 sm:first:pl-0">
             <dt className="font-bold">ID da transação</dt>
             <dd className="text-[#cfb28c]" title={receipt.transactionHash}>{shortHash(receipt.transactionHash)}</dd>
           </div>
-          <div className="flex flex-col gap-1 sm:px-4">
+          <div className="flex flex-col gap-1 whitespace-nowrap sm:px-5">
             <dt className="text-[#cfb28c]">Data</dt>
             <dd>{formatDate(receipt.createdAt)}</dd>
           </div>
-          <div className="flex flex-col gap-1 sm:px-4">
+          <div className="flex flex-col gap-1 whitespace-nowrap sm:px-5">
             <dt className="text-[#cfb28c]">Total</dt>
             <dd>{summary.totalEth} ETH</dd>
           </div>
-          <div className="flex flex-col gap-1 sm:px-4">
+          <div className="flex flex-col gap-1 whitespace-nowrap sm:px-5">
             <dt className="text-[#cfb28c]">Carteira</dt>
             <dd>{walletLabels[receipt.wallet]}</dd>
           </div>
         </dl>
 
         <section aria-labelledby="receipt-details" className="flex flex-col gap-3">
-          <h3 id="receipt-details" className="text-[15px] font-bold leading-4">Detalhes da transação</h3>
-          <div className="grid grid-cols-[minmax(0,1fr)_72px_104px] items-center gap-3 border-b border-[#3f2319] pb-3 text-base font-bold leading-4">
+          <h2 id="receipt-details" className="text-[15px] font-bold leading-4">Detalhes da transação</h2>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-[#3f2319] pb-3 text-base font-bold leading-4 sm:grid-cols-[minmax(0,1fr)_72px_104px]">
             <span>NFTs</span>
-            <span className="text-center">Edições</span>
+            <span className="hidden text-center sm:block">Edições</span>
             <span className="text-right">Subtotal</span>
           </div>
           <ul className="flex flex-col gap-3">
-            {summary.items.map((line) => <li key={line.nft.id} className="grid grid-cols-[minmax(0,1fr)_72px_104px] items-center gap-3">
+            {summary.items.map((line) => <li key={`${line.nft.id}:${line.edition}`} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:grid-cols-[minmax(0,1fr)_72px_104px]">
               <div className="flex min-w-0 items-center gap-3">
-                <img src={line.nft.artwork} alt="" loading="lazy" width="70" height="70" className="size-[70px] shrink-0 rounded-lg object-cover" />
+                <img src={line.nft.artwork} alt="" loading="lazy" width="70" height="70" className="size-14 shrink-0 rounded-lg object-cover sm:size-[70px]" />
                 <div className="flex min-w-0 flex-col gap-[6px]">
                   <p className="truncate text-base font-bold leading-4">{line.nft.name}</p>
-                  <p className="text-sm leading-4 text-[#b39463]">ID do token: {tokenId(line.nft.id)}</p>
+                  <p className="text-sm leading-4 text-[#b39463]">ID do token: {tokenId(line.nft.id)} · Edição: {line.edition}</p>
                 </div>
               </div>
-              <span className="text-center text-sm leading-4 text-[#cfb28c]">(x {line.quantity})</span>
-              <span className="text-right text-[18px] font-bold leading-4 text-[#e89b55] tabular-nums">{line.lineTotalEth} ETH</span>
+              {/* no mobile a quantidade sobe para cima do subtotal; acima de sm o contêiner some e voltam as três colunas */}
+              <div className="flex flex-col items-end gap-1 sm:contents">
+                <span className="text-sm leading-4 text-[#cfb28c] sm:text-center">(x {line.quantity})</span>
+                <span className="text-right text-[18px] font-bold leading-4 text-[#e89b55] tabular-nums">{line.lineTotalEth} ETH</span>
+              </div>
             </li>)}
           </ul>
           <div className="mt-1 flex items-center justify-between border-t border-[#3f2319] pt-3 text-[15px] leading-5">
@@ -130,6 +109,6 @@ export function OrderReceiptDialog({ receipt, onClose }: { receipt: OrderReceipt
 
         <div aria-hidden="true" className="absolute bottom-0 left-0 h-[10px] w-full bg-[#d28a4c]" />
       </div>
-    </dialog>
+    </article>
   )
 }

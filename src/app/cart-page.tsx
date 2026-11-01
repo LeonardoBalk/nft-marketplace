@@ -1,3 +1,4 @@
+import { formatEth } from '../shared/money/eth'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { isAxiosError } from 'axios'
 import { useState, type FormEvent } from 'react'
@@ -22,10 +23,6 @@ const stepperButton = 'flex h-[30px] w-5 shadow-[0_4px_12px_-2px_rgba(20,13,10,0
 
 function tokenId(nftId: string) {
   return `#${(nftId.match(/\d+$/)?.[0] ?? '0').padStart(4, '0')}`
-}
-
-function formatEth(value: string | undefined) {
-  return Number(value ?? 0).toFixed(2)
 }
 
 function requestError(error: unknown, fallback: string) {
@@ -60,7 +57,7 @@ export function CartPage() {
   }
 
   const items = cart?.items ?? []
-  const hasUnavailable = items.some((line) => line.quantity > line.nft.available)
+  const hasUnavailable = items.some((line) => line.quantity > line.nft.editionAvailability[line.edition] || items.filter((other) => other.nft.id === line.nft.id).reduce((sum, other) => sum + other.quantity, 0) > line.nft.available)
   const firstNftId = items[0]?.nft.id ?? ''
 
   const applyCoupon = (event: FormEvent<HTMLFormElement>) => {
@@ -101,22 +98,22 @@ export function CartPage() {
               : items.length === 0
                 ? <p className="text-[15px] leading-6 text-[#cfb28c]">Seu carrinho está vazio. <Link to="/" search={defaultCatalogSearch} hash="catalogo" className="text-[#e89b55] underline">Explore o mercado</Link> para escolher uma peça.</p>
                 : <ul className="flex flex-col gap-3">
-                  {items.map((line) => <li key={line.nft.id} className={`${cartColumns} h-[70px] bg-[#241612]`}>
+                  {items.map((line) => <li key={`${line.nft.id}:${line.edition}`} className={`${cartColumns} h-[70px] bg-[#241612]`}>
                     <div className="flex min-w-0 items-center gap-4">
                       <img src={line.nft.artwork} alt="" loading="lazy" width="70" height="70" className="size-[70px] shrink-0 rounded-[6px] object-cover" />
                       <div className="flex min-w-0 flex-col gap-[6px]">
                         <Link to="/nft/$nftId" params={{ nftId: line.nft.id }} className="truncate text-base font-bold leading-4 transition-colors hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-[#d28a4c]">{line.nft.name}</Link>
-                        <p className="text-sm leading-4 text-[#b39463]">ID do token: {tokenId(line.nft.id)}</p>
+                        <p className="text-sm leading-4 text-[#b39463]">ID do token: {tokenId(line.nft.id)} · Edição: {line.edition}</p>
                       </div>
                     </div>
                     <span className="text-base font-bold leading-4 text-[#cfb28c] tabular-nums">{line.nft.priceEth} ETH</span>
                     <div className="flex items-center justify-center gap-3">
-                      <button type="button" aria-label={`Diminuir quantidade de ${line.nft.name}`} disabled={updateItem.isPending || line.quantity <= 1} onClick={() => updateItem.mutate({ nftId: line.nft.id, quantity: line.quantity - 1 })} className={stepperButton}><Minus size={14} strokeWidth={2.5} /></button>
-                      <output aria-label={`Quantidade de ${line.nft.name}`} className="min-w-[11px] text-center text-[17px] leading-6">{line.quantity}</output>
-                      <button type="button" aria-label={`Aumentar quantidade de ${line.nft.name}`} disabled={updateItem.isPending || line.quantity >= line.nft.available} onClick={() => updateItem.mutate({ nftId: line.nft.id, quantity: line.quantity + 1 })} className={stepperButton}><Plus size={14} strokeWidth={2.5} /></button>
+                      <button type="button" aria-label={`Diminuir quantidade de ${line.nft.name}, ${line.edition}`} disabled={updateItem.isPending || line.quantity <= 1} onClick={() => updateItem.mutate({ nftId: line.nft.id, edition: line.edition, quantity: line.quantity - 1 })} className={stepperButton}><Minus size={14} strokeWidth={2.5} /></button>
+                      <output aria-label={`Quantidade de ${line.nft.name}, ${line.edition}`} className="min-w-[11px] text-center text-[17px] leading-6">{line.quantity}</output>
+                      <button type="button" aria-label={`Aumentar quantidade de ${line.nft.name}, ${line.edition}`} disabled={updateItem.isPending || line.quantity >= line.nft.editionAvailability[line.edition] || items.filter((other) => other.nft.id === line.nft.id).reduce((sum, other) => sum + other.quantity, 0) >= line.nft.available} onClick={() => updateItem.mutate({ nftId: line.nft.id, edition: line.edition, quantity: line.quantity + 1 })} className={stepperButton}><Plus size={14} strokeWidth={2.5} /></button>
                     </div>
                     <span className="text-base font-bold leading-4 text-[#e89b55] tabular-nums">{line.lineTotalEth} ETH</span>
-                    <button type="button" aria-label={`Remover ${line.nft.name} do carrinho`} disabled={removeItem.isPending} onClick={() => removeItem.mutate(line.nft.id)} className="flex size-6 cursor-pointer items-center justify-center text-[#cfb28c] transition-colors hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-[#d28a4c] disabled:pointer-events-none disabled:opacity-50"><Trash2 size={18} strokeWidth={1.6} /></button>
+                    <button type="button" aria-label={`Remover ${line.nft.name} do carrinho, ${line.edition}`} disabled={removeItem.isPending} onClick={() => removeItem.mutate({ nftId: line.nft.id, edition: line.edition })} className="flex size-6 cursor-pointer items-center justify-center text-[#cfb28c] transition-colors hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-[#d28a4c] disabled:pointer-events-none disabled:opacity-50"><Trash2 size={18} strokeWidth={1.6} /></button>
                   </li>)}
                 </ul>}
 

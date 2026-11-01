@@ -42,6 +42,33 @@ test('faixa de preço filtra sem perder precisão decimal', async ({ page }) => 
   await expect(page.locator('#catalogo li')).toHaveCount(9)
 })
 
+test('loading lento mostra skeleton e falha HTTP permite tentar novamente', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(async () => {
+    await fetch('/api/demo/scenario', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ latencyMs: 700 }),
+    })
+  })
+
+  await page.goto('/nft/emerald-ape-043')
+  await expect(page.getByRole('status')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Emerald Ape #043' })).toBeVisible({ timeout: 10_000 })
+
+  await page.evaluate(async () => {
+    await fetch('/api/demo/scenario', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ latencyMs: 0, nextFailure: { method: 'GET', path: '/api/nfts', kind: 'http', status: 503, remaining: 3 } }),
+    })
+  })
+  await page.goto('/?category=Arte%203D')
+  await expect(page.getByRole('alert').filter({ hasText: 'Não foi possível carregar os NFTs.' })).toBeVisible()
+  await page.getByRole('alert').getByRole('button', { name: 'Tentar novamente' }).click()
+  await expect(page.locator('#catalog-results').getByRole('link', { name: /Neon Vessel/ }).first()).toBeVisible({ timeout: 10_000 })
+})
+
 test('detalhe abre diretamente e NFT inexistente mostra erro', async ({ page }) => {
   await page.goto('/nft/emerald-ape-042')
   await expect(page.getByRole('heading', { name: 'Emerald Ape #042' })).toBeVisible()

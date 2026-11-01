@@ -64,6 +64,7 @@ export function useLogout() {
         await api.post('/auth/logout')
       } finally {
         clearAccessToken()
+        window.dispatchEvent(new Event('kurio:session-ended'))
       }
     },
     // sessão nula primeiro: clear() tiraria a consulta de baixo de quem está na tela e o header seguiria logado

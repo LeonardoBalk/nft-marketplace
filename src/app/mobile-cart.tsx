@@ -1,3 +1,4 @@
+import { formatEth } from '../shared/money/eth'
 import { Link, useCanGoBack, useNavigate, useRouter } from '@tanstack/react-router'
 import { ChevronLeft, Trash2 } from 'lucide-react'
 import type { FormEvent } from 'react'
@@ -8,10 +9,6 @@ import { defaultCatalogSearch } from '../features/catalog/contracts'
 import { lastCatalogSearch } from '../features/catalog/last-search'
 
 const stepperButton = 'flex size-6 cursor-pointer items-center justify-center rounded-full border border-[#3f2319] bg-[#2f1d15] text-[#f5f1eb] transition-colors hover:border-[#d28a4c] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d99558] disabled:cursor-not-allowed disabled:text-[#55321f] disabled:hover:border-[#3f2319]'
-
-function formatEth(value: string | undefined) {
-  return Number(value ?? 0).toFixed(2)
-}
 
 function MobileCartSkeleton() {
   return (
@@ -64,7 +61,7 @@ export function MobileCart({ cart, items, isPending, isError, hasUnavailable, si
             : items.length === 0
               ? <p className="mt-3 text-[15px] leading-6 text-[#cfb28c]">Seu carrinho está vazio. <Link to="/" search={defaultCatalogSearch} hash="catalogo" className="text-[#e89b55] underline">Explore o mercado</Link> para escolher uma peça.</p>
               : <ul className="mt-3 flex flex-col gap-5">
-                {items.map((line) => <li key={line.nft.id} className="relative flex h-[100px] overflow-hidden rounded-[14px] bg-[#241612] shadow-[0_6px_20px_rgba(10,6,4,0.45)]">
+                {items.map((line) => <li key={`${line.nft.id}:${line.edition}`} className="relative flex h-[100px] overflow-hidden rounded-[14px] bg-[#241612] shadow-[0_6px_20px_rgba(10,6,4,0.45)]">
                   <img src={line.nft.artwork} alt="" loading="lazy" width="100" height="100" className="size-[100px] shrink-0 object-cover" />
                   {/* o texto para antes do stepper: nomes longos truncam em vez de passar por baixo dele */}
                   <div className="flex min-w-0 flex-1 flex-col pl-[9px] pr-[94px] pt-[13px]">
@@ -73,12 +70,12 @@ export function MobileCart({ cart, items, isPending, isError, hasUnavailable, si
                     <p className="mt-[18px] text-[18px] font-bold leading-4 text-[#e89b55] tabular-nums">{line.lineTotalEth} ETH</p>
                   </div>
                   {/* no frame a lixeira cai sobre o "+" de um item só; aqui ela é um controle próprio, acima dele */}
-                  <button type="button" aria-label={`Remover ${line.nft.name} do carrinho`} disabled={removeItem.isPending} onClick={() => removeItem.mutate(line.nft.id)} className="absolute right-4 top-2 flex size-6 cursor-pointer items-center justify-center text-[#d28a4c] transition-colors hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d99558] disabled:opacity-50"><Trash2 size={16} strokeWidth={1.5} aria-hidden="true" /></button>
+                  <button type="button" aria-label={`Remover ${line.nft.name} do carrinho, ${line.edition}`} disabled={removeItem.isPending} onClick={() => removeItem.mutate({ nftId: line.nft.id, edition: line.edition })} className="absolute right-4 top-2 flex size-6 cursor-pointer items-center justify-center text-[#d28a4c] transition-colors hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d99558] disabled:opacity-50"><Trash2 size={16} strokeWidth={1.5} aria-hidden="true" /></button>
                   <div className="absolute right-4 top-[38px] flex items-center">
                     {/* com 1 unidade o "−" fica apagado, como no frame: para tirar o item, a lixeira */}
-                    <button type="button" aria-label={`Diminuir quantidade de ${line.nft.name}`} disabled={updateItem.isPending || line.quantity <= 1} onClick={() => updateItem.mutate({ nftId: line.nft.id, quantity: line.quantity - 1 })} className={stepperButton}><span aria-hidden="true" className="h-0.5 w-[9px] rounded-full bg-current" /></button>
-                    <output aria-label={`Quantidade de ${line.nft.name}`} className="min-w-[33px] pt-[7px] text-center text-base leading-[22px] text-[#f5f1eb]">{line.quantity}</output>
-                    <button type="button" aria-label={`Aumentar quantidade de ${line.nft.name}`} disabled={updateItem.isPending || line.quantity >= line.nft.available} onClick={() => updateItem.mutate({ nftId: line.nft.id, quantity: line.quantity + 1 })} className={`${stepperButton} text-[21px] leading-4`}><span aria-hidden="true">+</span></button>
+                    <button type="button" aria-label={`Diminuir quantidade de ${line.nft.name}, ${line.edition}`} disabled={updateItem.isPending || line.quantity <= 1} onClick={() => updateItem.mutate({ nftId: line.nft.id, edition: line.edition, quantity: line.quantity - 1 })} className={stepperButton}><span aria-hidden="true" className="h-0.5 w-[9px] rounded-full bg-current" /></button>
+                    <output aria-label={`Quantidade de ${line.nft.name}, ${line.edition}`} className="min-w-[33px] pt-[7px] text-center text-base leading-[22px] text-[#f5f1eb]">{line.quantity}</output>
+                    <button type="button" aria-label={`Aumentar quantidade de ${line.nft.name}, ${line.edition}`} disabled={updateItem.isPending || line.quantity >= line.nft.editionAvailability[line.edition] || items.filter((other) => other.nft.id === line.nft.id).reduce((sum, other) => sum + other.quantity, 0) >= line.nft.available} onClick={() => updateItem.mutate({ nftId: line.nft.id, edition: line.edition, quantity: line.quantity + 1 })} className={`${stepperButton} text-[21px] leading-4`}><span aria-hidden="true">+</span></button>
                   </div>
                 </li>)}
               </ul>}

@@ -2,11 +2,11 @@ import { z } from 'zod'
 import type { CatalogFacets, CatalogSearch, NftNetwork, NftPage, NftRarity, NftSummary } from '../features/catalog/contracts'
 import { ethToWei } from '../shared/money/eth'
 
-type NftSeed = Omit<NftSummary, 'rating' | 'reviews' | 'rarity' | 'attributes'>
+type NftSeed = Omit<NftSummary, 'rating' | 'reviews' | 'rarity' | 'attributes' | 'editionAvailability'>
 
 const initialNfts: NftSeed[] = [
   { id: 'emerald-ape-042', name: 'Emerald Ape #042', collection: 'Kurio Apes', category: 'Colecionáveis', network: 'ethereum', artwork: '/artwork/emerald-ape.webp', priceEth: '1.19', available: 50, edition: 100, version: 1 },
-  { id: 'sage-nomad-009', name: 'Sage Nomad #009', collection: 'Kurio Apes', category: 'Arte digital', network: 'polygon', artwork: '/artwork/cosmic-bloom.webp', priceEth: '1.69', available: 12, edition: 50, version: 1 },
+  { id: 'sage-nomad-009', name: 'Sage Nomad #009', collection: 'Kurio Apes', category: 'Arte digital', network: 'polygon', artwork: '/artwork/sage-nomad.png', priceEth: '1.69', available: 12, edition: 50, version: 1 },
   { id: 'neon-vessel-552', name: 'Neon Vessel #552', collection: 'Kurio Apes', category: 'Arte 3D', network: 'solana', artwork: '/artwork/neon-vessel.webp', priceEth: '1.99', oldPriceEth: '2.29', available: 8, edition: 25, version: 1 },
   { id: 'cosmic-bloom-118', name: 'Cosmic Bloom #118', collection: 'Kurio Apes', category: 'Arte digital', network: 'ethereum', artwork: '/artwork/cosmic-bloom.webp', priceEth: '1.29', available: 22, edition: 100, version: 1 },
   { id: 'violet-nomad-314', name: 'Violet Nomad #314', collection: 'Kurio Apes', category: 'Fotografia', network: 'polygon', artwork: '/artwork/cosmic-bloom.webp', priceEth: '1.39', available: 14, edition: 50, version: 1 },
@@ -15,10 +15,10 @@ const initialNfts: NftSeed[] = [
   { id: 'golden-signal-160', name: 'Golden Signal #160', collection: 'Kurio Apes', category: 'Generativa', network: 'polygon', artwork: '/artwork/golden-beat.webp', priceEth: '0.39', available: 48, edition: 100, version: 1 },
   { id: 'golden-wave-411', name: 'Golden Wave #411', collection: 'Kurio Apes', category: 'Jogos', network: 'solana', artwork: '/artwork/golden-beat.webp', priceEth: '0.69', available: 30, edition: 100, version: 1 },
   { id: 'emerald-ape-043', name: 'Emerald Ape #043', collection: 'Kurio Apes', category: 'Colecionáveis', network: 'ethereum', artwork: '/artwork/emerald-ape.webp', priceEth: '1.49', available: 18, edition: 100, version: 1 },
-  { id: 'sage-nomad-010', name: 'Sage Nomad #010', collection: 'Kurio Apes', category: 'Assinaturas', network: 'polygon', artwork: '/artwork/cosmic-bloom.webp', priceEth: '0.89', available: 20, edition: 50, version: 1 },
+  { id: 'sage-nomad-010', name: 'Sage Nomad #010', collection: 'Kurio Apes', category: 'Assinaturas', network: 'polygon', artwork: '/artwork/sage-nomad.png', priceEth: '0.89', available: 20, edition: 50, version: 1 },
   { id: 'neon-vessel-553', name: 'Neon Vessel #553', collection: 'Kurio Apes', category: 'Utilidade', network: 'solana', artwork: '/artwork/neon-vessel.webp', priceEth: '2.19', available: 6, edition: 25, version: 1 },
   { id: 'emerald-ape-044', name: 'Emerald Ape #044', collection: 'Kurio Apes', category: 'Colecionáveis', network: 'ethereum', artwork: '/artwork/emerald-ape.webp', priceEth: '1.59', available: 16, edition: 100, version: 1 },
-  { id: 'sage-nomad-011', name: 'Sage Nomad #011', collection: 'Kurio Apes', category: 'Arte digital', network: 'polygon', artwork: '/artwork/cosmic-bloom.webp', priceEth: '1.09', available: 24, edition: 50, version: 1 },
+  { id: 'sage-nomad-011', name: 'Sage Nomad #011', collection: 'Kurio Apes', category: 'Arte digital', network: 'polygon', artwork: '/artwork/sage-nomad.png', priceEth: '1.09', available: 24, edition: 50, version: 1 },
   { id: 'ivory-baron-089', name: 'Ivory Baron #089', collection: 'Kurio Apes', category: 'Fotografia', network: 'ethereum', artwork: '/artwork/neon-vessel.webp', priceEth: '1.49', available: 11, edition: 50, version: 1 },
   { id: 'neon-vessel-556', name: 'Neon Vessel #556', collection: 'Kurio Apes', category: 'Arte 3D', network: 'solana', artwork: '/artwork/neon-vessel.webp', priceEth: '2.09', available: 9, edition: 25, version: 1 },
 ]
@@ -56,6 +56,7 @@ function decorate(seed: NftSeed): NftSummary {
   const traits = curated?.attributes ?? [attributePool[hash % attributePool.length], attributePool[(hash >> 4) % attributePool.length]]
   return {
     ...seed,
+    editionAvailability: { '1/1': 1, '1/10': 10, '1/50': 50, ABERTA: seed.available },
     rating: curated?.rating ?? Number((4 + (hash % 11) / 10).toFixed(1)),
     reviews: curated?.reviews ?? 5 + (hash % 195),
     rarity,
@@ -112,14 +113,17 @@ const generatedNfts: NftSeed[] = generatedCategories.map((category, index) => {
 })
 
 const nfts: NftSummary[] = [...initialNfts, ...generatedNfts].map(decorate)
+const initialNftState = new Map(nfts.map((nft) => [nft.id, { ...nft }]))
 const catalogStoreKey = 'kurio.demo.catalog.v1'
 const savedCatalogSchema = z.record(z.string(), z.object({
   priceEth: z.string().regex(/^\d+(?:\.\d{1,18})?$/),
   available: z.number().int().min(0),
   version: z.number().int().min(1),
+  editionAvailability: z.record(z.string(), z.number().int().min(0)).optional(),
 }))
 
 try {
+  if (typeof localStorage === 'undefined') throw new Error('storage unavailable')
   const raw = localStorage.getItem(catalogStoreKey)
   const saved = raw ? savedCatalogSchema.safeParse(JSON.parse(raw)) : null
   if (saved?.success) {
@@ -129,11 +133,11 @@ try {
     }
   }
 } catch {
-  localStorage.removeItem(catalogStoreKey)
+  if (typeof localStorage !== 'undefined') localStorage.removeItem(catalogStoreKey)
 }
 
 function persistCatalog(): void {
-  localStorage.setItem(catalogStoreKey, JSON.stringify(Object.fromEntries(nfts.map(({ id, priceEth, available, version }) => [id, { priceEth, available, version }]))))
+  localStorage.setItem(catalogStoreKey, JSON.stringify(Object.fromEntries(nfts.map(({ id, priceEth, available, version, editionAvailability }) => [id, { priceEth, available, version, editionAvailability }]))))
 }
 const pageSize = 9
 
@@ -209,4 +213,31 @@ export function changeNftPrice(nftId: string, priceEth: string): NftSummary | nu
   nft.version += 1
   persistCatalog()
   return { ...nft }
+}
+
+export function changeNftAvailability(nftId: string, available: number): NftSummary | null {
+  const nft = nfts.find((entry) => entry.id === nftId)
+  if (!nft || !Number.isInteger(available) || available < 0) return null
+  nft.available = available
+  nft.version += 1
+  persistCatalog()
+  return { ...nft }
+}
+
+export function consumeNftEdition(nftId: string, edition: import('../features/catalog/contracts').NftEdition, quantity: number): NftSummary | null {
+  const nft = nfts.find((entry) => entry.id === nftId)
+  if (!nft || nft.available < quantity || nft.editionAvailability[edition] < quantity) return null
+  nft.available -= quantity
+  nft.editionAvailability = { ...nft.editionAvailability, [edition]: nft.editionAvailability[edition] - quantity }
+  nft.version += 1
+  persistCatalog()
+  return { ...nft, editionAvailability: { ...nft.editionAvailability } }
+}
+
+export function resetMockCatalog(): void {
+  for (const nft of nfts) {
+    const initial = initialNftState.get(nft.id)
+    if (initial) Object.assign(nft, initial)
+  }
+  localStorage.removeItem(catalogStoreKey)
 }

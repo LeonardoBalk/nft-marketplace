@@ -21,6 +21,9 @@ export interface CatalogFacets {
   networks: Array<{ value: NftNetwork; label: string; count: number }>
 }
 
+export const editions = ['1/1', '1/10', '1/50', 'ABERTA'] as const
+export type NftEdition = (typeof editions)[number]
+
 export type NftRarity = 'COMUM' | 'RARO'
 
 export interface NftSummary {
@@ -34,6 +37,7 @@ export interface NftSummary {
   oldPriceEth?: string
   available: number
   edition: number
+  editionAvailability: Record<NftEdition, number>
   version: number
   rating: number
   reviews: number

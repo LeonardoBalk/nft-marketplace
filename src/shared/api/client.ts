@@ -16,7 +16,15 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error: unknown) => {
-    if (axios.isAxiosError(error) && error.response?.status === 401) clearAccessToken()
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      const currentToken = getAccessToken()
+      const sentToken = error.config?.headers?.Authorization
+      // A late 401 from a previous session must not invalidate a newer login.
+      if (currentToken && sentToken === `Bearer ${currentToken}`) {
+        clearAccessToken()
+        if (typeof window !== 'undefined') window.dispatchEvent(new Event('kurio:session-expired'))
+      }
+    }
     return Promise.reject(error)
   },
 )

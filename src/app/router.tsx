@@ -1,5 +1,6 @@
 import { createRootRoute, createRoute, createRouter, Outlet, redirect, useNavigate, useRouterState } from '@tanstack/react-router'
-import { useCallback, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CatalogPage } from './catalog-page'
 import { NftDetailPage } from './nft-detail-page'
 import { CartPage } from './cart-page'
@@ -7,6 +8,7 @@ import { FavoritesPage } from './favorites-page'
 import { ProfilePage } from './profile-page'
 import { WalletsPage } from './wallets-page'
 import { CheckoutPage } from './checkout-page'
+import { OrderConfirmationPage } from './order-confirmation-page'
 import { SiteHeader } from './site-header'
 import { MobileTabBar, hidesMobileNav } from './mobile-tab-bar'
 import { AuthPage } from './auth-page'
@@ -14,6 +16,7 @@ import { AuthGatePage } from './auth-gate-page'
 import { authSearchSchema } from '../features/auth/contracts'
 import { AuthModalContext, type AuthModalRequest } from '../features/auth/modal-context'
 import { getAccessToken } from '../features/auth/session'
+import { authKeys } from '../features/auth/queries'
 import { catalogSearchSchema, defaultCatalogSearch } from '../features/catalog/contracts'
 import { favoritesSearchSchema } from '../features/favorites/contracts'
 
@@ -25,7 +28,10 @@ function requireSession({ location }: { location: { href: string } }) {
 function RootLayout() {
   const [authModal, setAuthModal] = useState<AuthModalRequest | null>(null)
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const sessionExpiredHandled = useRef(false)
   const onAuthRoute = useRouterState({ select: (state) => state.location.pathname === '/entrar' })
+  const onReceiptRoute = useRouterState({ select: (state) => state.location.pathname.startsWith('/pedido/') })
   const hideMobileNav = useRouterState({ select: (state) => hidesMobileNav(state.location.pathname) })
   const closeAuth = useCallback(() => {
     setAuthModal(null)
@@ -35,8 +41,26 @@ function RootLayout() {
   const openAuth = useCallback((mode: AuthModalRequest['mode'], redirect?: string) => setAuthModal({ mode, redirect }), [])
   const authModalContext = useMemo(() => ({ openAuth, closeAuth }), [openAuth, closeAuth])
 
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      if (sessionExpiredHandled.current) return
+      sessionExpiredHandled.current = true
+      queryClient.setQueryData(authKeys.session, null)
+      void queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== authKeys.session[0] })
+      openAuth('login', `${window.location.pathname}${window.location.search}${window.location.hash}`)
+    }
+    const handleSessionRestored = () => { sessionExpiredHandled.current = false }
+    window.addEventListener('kurio:session-expired', handleSessionExpired)
+    window.addEventListener('kurio:session-restored', handleSessionRestored)
+    return () => {
+      window.removeEventListener('kurio:session-expired', handleSessionExpired)
+      window.removeEventListener('kurio:session-restored', handleSessionRestored)
+    }
+  }, [openAuth, queryClient])
+
   return <AuthModalContext.Provider value={authModalContext}>
-    <SiteHeader />
+    {/* a confirmação é o cartão do recibo sozinho na página, sem header */}
+    {!onReceiptRoute && <SiteHeader />}
     <Outlet />
     {/* folga para o conteúdo não terminar embaixo da tab bar fixa */}
     {!hideMobileNav && <div aria-hidden="true" className="h-[calc(136px+env(safe-area-inset-bottom))] md:hidden" />}
@@ -98,13 +122,21 @@ const favoritesRoute = createRoute({
   validateSearch: (search) => favoritesSearchSchema.parse(search),
 })
 
+const orderRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/pedido/$orderId',
+  component: OrderConfirmationPage,
+  beforeLoad: requireSession,
+})
+
 const checkoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/checkout',
   component: CheckoutPage,
+  beforeLoad: requireSession,
 })
 
-export const router = createRouter({ routeTree: rootRoute.addChildren([catalogRoute, nftDetailRoute, cartRoute, checkoutRoute, authGateRoute, profileRoute, walletsRoute, favoritesRoute]) })
+export const router = createRouter({ routeTree: rootRoute.addChildren([catalogRoute, nftDetailRoute, cartRoute, checkoutRoute, authGateRoute, profileRoute, walletsRoute, favoritesRoute, orderRoute]) })
 
 declare module '@tanstack/react-router' {
   interface Register {

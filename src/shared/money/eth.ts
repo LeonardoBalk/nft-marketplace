@@ -5,3 +5,9 @@ export function ethToWei(value: string): bigint {
   const [whole, fraction = ''] = value.split('.')
   return BigInt(whole) * 10n ** BigInt(ETH_DECIMALS) + BigInt(fraction.padEnd(ETH_DECIMALS, '0'))
 }
+
+/** Present ETH without converting the decimal string to a floating-point number. */
+export function formatEth(value: string | undefined): string {
+  const [whole, fraction = ''] = (value ?? '0').split('.')
+  return `${whole}.${fraction.padEnd(2, '0')}`
+}

@@ -17,6 +17,16 @@ test('favoritar exige sessão e persiste depois do refresh', async ({ page }) =>
   await expect(dialog).toBeHidden()
 
   await expect(favorite).toHaveAttribute('aria-pressed', 'false')
+  await page.evaluate(async () => {
+    await fetch('/api/demo/scenario', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ nextFailure: { method: 'PUT', path: '/api/favorites/emerald-ape-042', kind: 'http', status: 503 } }),
+    })
+  })
+  await favorite.click()
+  await expect(page.getByRole('alert').filter({ hasText: 'Não foi possível atualizar os favoritos.' })).toBeVisible()
+  await expect(favorite).toHaveAttribute('aria-pressed', 'false')
 
   await favorite.click()
   await expect(favorite).toHaveAttribute('aria-pressed', 'true')

@@ -118,3 +118,7 @@ export function collectorWalletToCheckoutDefaults(wallet: CollectorWallet | null
     displayName: wallet.displayName,
   }
 }
+
+export function resetAccountStore(): void {
+  localStorage.removeItem(storeKey)
+}

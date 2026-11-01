@@ -57,9 +57,9 @@ export function NftDetailPage() {
   const network = networkLabels[item.network]
   const ratingValue = Math.round(item.rating)
   const reviewCount = item.reviews
-  const editionLimit = editionOptions.find((option) => option.label === edition)?.limit ?? Number.POSITIVE_INFINITY
+  const editionLimit = item.editionAvailability[edition]
   // limite da edicao e o menor entre tiragem e estoque
-  const maxQuantity = Math.max(1, Math.min(item.available, editionLimit))
+  const maxQuantity = Math.min(item.available, editionLimit)
   const quantityToAdd = Math.min(quantity, maxQuantity)
 
   return <>
@@ -88,7 +88,7 @@ export function NftDetailPage() {
           </ul>
           <div className="relative min-w-0 flex-1">
             <div className="flex aspect-[361/356] w-full items-center justify-center overflow-hidden rounded-[24px] lg:aspect-square lg:rounded-md lg:bg-[#241612] lg:p-4">
-              <img className={`size-full rounded-[24px] object-cover transition-transform lg:aspect-square lg:h-auto lg:w-full duration-300 motion-reduce:transition-none ${zoomed ? 'scale-150' : 'scale-100'}`} src={item.artwork} alt={`${item.name} — ${galleryViews[activeImage].toLowerCase()}`} width="404" height="404" fetchPriority="high" />
+              <img className={`size-full rounded-[24px] object-cover transition-transform lg:aspect-square lg:h-auto lg:w-full duration-300 motion-reduce:transition-none ${zoomed || activeImage === 1 ? 'scale-150' : 'scale-100'}`} src={item.artwork} alt={`${item.name} — ${galleryViews[activeImage].toLowerCase()}`} width="404" height="404" fetchPriority="high" />
             </div>
             <button type="button" aria-label={zoomed ? 'Reduzir imagem' : 'Ampliar imagem'} aria-pressed={zoomed} onClick={() => setZoomed(!zoomed)} className="absolute right-[15px] top-[15px] hidden size-[30px] cursor-pointer lg:flex items-center justify-center rounded-full border border-[#3f2319] bg-[#2f1d15] text-[#f5f1eb] transition-colors hover:border-[#d28a4c] hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d99558] lg:items-center lg:justify-center"><ZoomIn size={18} strokeWidth={1.8} /></button>
           </div>
@@ -127,7 +127,7 @@ export function NftDetailPage() {
             <h2 id="edition-label" className="text-[15px] font-bold leading-4">Edição:</h2>
             {/* chips em elipse, como no frame: rounded-[50%] arredonda o contorno inteiro, rounded-full só as pontas */}
             <div role="group" aria-labelledby="edition-label" className="flex flex-wrap items-center gap-3">
-              {editionOptions.map((option) => <button key={option.label} type="button" aria-pressed={option.label === edition} onClick={() => { setEdition(option.label); setQuantity((current) => Math.min(current, Math.max(1, Math.min(item.available, option.limit)))) }} className={`h-7 min-w-[42px] cursor-pointer rounded-[50%] border text-sm leading-4 transition-colors ${option.limit === Number.POSITIVE_INFINITY ? 'px-2' : 'px-1'} focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d99558] ${option.label === edition ? 'border-[#d28a4c] font-medium text-[#e89b55]' : 'border-[#3f2319] text-[#cfb28c] hover:border-[#d28a4c]'}`}>{option.label}</button>)}
+              {editionOptions.map((option) => <button key={option.label} type="button" aria-pressed={option.label === edition} disabled={item.editionAvailability[option.label] === 0} onClick={() => { setEdition(option.label); setQuantity((current) => Math.min(current, Math.max(1, Math.min(item.available, item.editionAvailability[option.label])))) }} className={`h-7 min-w-[42px] cursor-pointer rounded-[50%] border text-sm leading-4 transition-colors ${option.limit === Number.POSITIVE_INFINITY ? 'px-2' : 'px-1'} focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d99558] ${option.label === edition ? 'border-[#d28a4c] font-medium text-[#e89b55]' : 'border-[#3f2319] text-[#cfb28c] hover:border-[#d28a4c]'}`}>{option.label}</button>)}
             </div>
           </div>
 
@@ -146,8 +146,8 @@ export function NftDetailPage() {
             </div>
             <div className="flex flex-wrap items-center gap-3 lg:gap-2">
               {/* comprar leva ao carrinho, onde ficam cupom e resumo; o ícone ao lado só adiciona e deixa a pessoa aqui */}
-              <Button disabled={item.available < 1 || addItem.isPending} onClick={() => addItem.mutate({ nftId: item.id, quantity: quantityToAdd }, { onSuccess: () => void navigate({ to: '/carrinho' }) })} className="h-[60px] min-h-0 w-[196px] flex-none rounded-[40px] bg-[linear-gradient(93.21deg,#d28a4c_-3.96%,rgba(210,138,76,0.8)_121.97%)] text-base font-bold leading-5 text-[#140d0a] lg:bg-none lg:h-10 lg:w-[130px] lg:flex-none lg:rounded-[6px] lg:bg-[#d28a4c] lg:text-sm"><span className="lg:hidden">Comprar NFT</span><span className="hidden lg:inline">COMPRAR</span></Button>
-              <button type="button" aria-label="Adicionar ao carrinho" disabled={item.available < 1 || addItem.isPending} onClick={() => addItem.mutate({ nftId: item.id, quantity: quantityToAdd }, { onSuccess: () => setAddedToCart(true) })} className="inline-flex cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 size-[60px] shrink-0 items-center justify-center rounded-full border border-[#3f2319] bg-[#2f1d15] text-[#b39463] transition-colors hover:border-[#d28a4c] hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d99558] lg:hidden"><ShoppingCart size={20} fill="currentColor" strokeWidth={1.5} aria-hidden="true" /></button>
+              <Button disabled={item.available < 1 || editionLimit < 1 || addItem.isPending} onClick={() => addItem.mutate({ nftId: item.id, edition, quantity: quantityToAdd }, { onSuccess: () => void navigate({ to: '/carrinho' }) })} className="h-[60px] min-h-0 w-[196px] flex-none rounded-[40px] bg-[linear-gradient(93.21deg,#d28a4c_-3.96%,rgba(210,138,76,0.8)_121.97%)] text-base font-bold leading-5 text-[#140d0a] lg:bg-none lg:h-10 lg:w-[130px] lg:flex-none lg:rounded-[6px] lg:bg-[#d28a4c] lg:text-sm"><span className="lg:hidden">Comprar NFT</span><span className="hidden lg:inline">COMPRAR</span></Button>
+              <button type="button" aria-label="Adicionar ao carrinho" disabled={item.available < 1 || editionLimit < 1 || addItem.isPending} onClick={() => addItem.mutate({ nftId: item.id, edition, quantity: quantityToAdd }, { onSuccess: () => setAddedToCart(true) })} className="inline-flex cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 size-[60px] shrink-0 items-center justify-center rounded-full border border-[#3f2319] bg-[#2f1d15] text-[#b39463] transition-colors hover:border-[#d28a4c] hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d99558] lg:hidden"><ShoppingCart size={20} fill="currentColor" strokeWidth={1.5} aria-hidden="true" /></button>
               <FavoriteButton nftId={item.id} nftName={item.name} size={20} showLabel className="hidden h-10 w-[130px] rounded-[6px] border-[#d28a4c] bg-transparent px-3 hover:border-[#e89b55] lg:inline-flex" />
             </div>
           </div>

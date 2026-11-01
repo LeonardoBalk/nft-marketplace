@@ -40,3 +40,7 @@ export function removeFavorite(user: AuthUser, nftId: string): FavoritesResponse
   saveStore(store)
   return { nftIds: store[user.id] }
 }
+
+export function resetFavoritesStore(): void {
+  localStorage.removeItem(storeKey)
+}

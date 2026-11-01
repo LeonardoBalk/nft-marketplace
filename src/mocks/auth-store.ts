@@ -198,8 +198,23 @@ export async function deleteMockSession(token: string | null): Promise<void> {
   saveDatabase(database)
 }
 
+export async function expireMockSession(token: string | null): Promise<boolean> {
+  if (!token) return false
+  const database = await getDatabase()
+  const session = database.sessions.find((entry) => entry.token === token)
+  if (!session) return false
+  session.expiresAt = new Date(Date.now() - 1).toISOString()
+  saveDatabase(database)
+  return true
+}
+
 export async function authenticateMockRequest(request: Request): Promise<AuthUser | null> {
   const authorization = request.headers.get('authorization')
   const token = authorization?.match(/^Bearer\s+(.+)$/i)?.[1] ?? null
   return getMockSession(token)
+}
+
+export function resetMockAuthStore(): void {
+  databasePromise = undefined
+  localStorage.removeItem(databaseKey)
 }
