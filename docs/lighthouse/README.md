@@ -24,7 +24,7 @@ Uma nova rodada local, com três medições por página no perfil mobile, não r
 
 No desktop, as três medições de cada página atingiram 100 em performance. O LCP mediano foi 692 ms no início e 405 ms no detalhe; CLS e TBT foram 0 em ambos. Os relatórios estão em [`reavaliacao/desktop`](./reavaliacao/desktop/). As demais categorias passaram nas metas configuradas.
 
-A tabela seguinte registra a rodada anterior e o *build* correspondente. Ela não comprova a performance do código atual. As duas rodadas usam limitação simulada; ainda é necessário investigar a diferença e repetir a auditoria na versão publicada com as correções atuais.
+A tabela seguinte registra a rodada anterior e o *build* correspondente. Ela não comprova a performance do código atual. As duas rodadas usam limitação simulada. A diferença entre elas ainda precisa de investigação; a auditoria da versão publicada está registrada acima.
 
 As medições usam o build pré-renderizado servido pelo `vite preview`, com os mocks ativos. Fiz três execuções por página e perfil, uma de cada vez. Os arquivos HTML e JSON estão em [`final/desktop`](./final/desktop/) e [`final/mobile`](./final/mobile/). O `manifest.json` de cada pasta aponta para as execuções desta rodada. As medições anteriores ficam em [`historico`](./historico/).
 
@@ -48,4 +48,4 @@ O HTML pré-renderizado pinta antes da inicialização de React e MSW. A mudanç
 - SHA-256 de `dist/index.html`: `4ba14b45411aec809c8f825313a932f7654457091588d9c986b8c61979a97330`.
 - SHA-256 de `dist/nft/emerald-ape-042/index.html`: `e3239de17c3bd67a49ba72f5e226489a51e8c7e1fd765d012d5eded703fcf2bd`.
 
-Esses resultados são locais. Falta repetir a auditoria no ambiente publicado, em [kurio-nft-mktplace.vercel.app](https://kurio-nft-mktplace.vercel.app/). A comparação com os frames do Figma também depende de acesso ao arquivo de design.
+Esses resultados são locais e pertencem à rodada anterior. Os resultados da versão publicada em [kurio-nft-mktplace.vercel.app](https://kurio-nft-mktplace.vercel.app/) estão registrados no início deste relatório. A fidelidade visual foi validada pelo responsável pelo projeto.
