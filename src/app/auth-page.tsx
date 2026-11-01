@@ -55,7 +55,12 @@ export function AuthPage({ mode, redirect, onClose }: { mode: AuthMode; redirect
   useEffect(() => {
     const dialog = dialogRef.current
     if (!dialog) return
+    // ao fechar, o foco volta para quem abriu o modal (se ele ainda existir na tela)
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
     if (!dialog.open) dialog.showModal()
+    // o dialog nativo não trava a página: sem isso, rolar o cadastro no celular arrasta o início por trás
+    const overflow = document.documentElement.style.overflow
+    document.documentElement.style.overflow = 'hidden'
     dialog.focus({ preventScroll: true })
     const onCancel = (event: Event) => {
       event.preventDefault()
@@ -65,6 +70,8 @@ export function AuthPage({ mode, redirect, onClose }: { mode: AuthMode; redirect
     return () => {
       dialog.removeEventListener('cancel', onCancel)
       if (dialog.open) dialog.close()
+      document.documentElement.style.overflow = overflow
+      if (opener?.isConnected) opener.focus({ preventScroll: true })
     }
   }, [close])
 
@@ -118,9 +125,9 @@ export function AuthPage({ mode, redirect, onClose }: { mode: AuthMode; redirect
       aria-labelledby="auth-dialog-title"
       aria-modal="true"
       onClick={(event) => { if (event.target === event.currentTarget) close() }}
-      className={`fixed inset-0 m-auto w-[min(500px,calc(100vw-32px))] overflow-y-auto border-0 bg-[#241612] p-0 text-[#f5f1eb] shadow-[0_18px_70px_rgba(0,0,0,0.55)] outline-none backdrop:bg-black/70 md:max-h-[calc(100dvh-32px)] md:rounded-[8px] max-md:h-[min(896px,100dvh)] max-md:max-h-[100dvh] max-md:w-full max-md:max-w-[414px] max-md:bg-[#140d0a] ${isRegister ? 'md:h-[656px]' : 'md:h-[440px]'}`}
+      className={`fixed inset-0 m-auto w-[min(500px,calc(100vw-32px))] overflow-y-auto border-0 bg-[#241612] p-0 text-[#f5f1eb] shadow-[0_18px_70px_rgba(0,0,0,0.55)] outline-none overscroll-contain backdrop:bg-black/70 md:max-h-[calc(100dvh-32px)] md:rounded-[8px] max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:bg-[#140d0a] max-md:backdrop:bg-[#140d0a] ${isRegister ? 'md:h-[656px]' : 'md:h-[440px]'}`}
     >
-      <div className={`relative w-full max-md:flex max-md:h-full max-md:flex-col max-md:gap-10 max-md:px-7 max-md:pt-20 max-md:pb-6 ${isRegister ? 'md:min-h-[656px]' : 'md:min-h-[440px]'}`}>
+      <div className={`relative w-full max-md:flex max-md:min-h-full max-md:flex-col max-md:gap-10 max-md:px-7 max-md:pt-20 max-md:pb-6 ${isRegister ? 'md:min-h-[656px]' : 'md:min-h-[440px]'}`}>
         <header className={`flex shrink-0 flex-col items-center pt-12 max-md:h-[136px] max-md:justify-center max-md:p-0 ${isRegister ? 'md:h-[140px]' : 'md:h-[68px]'}`}>
           <span aria-label="Kurio" className="hidden font-mono text-[32px] font-bold leading-[42px] tracking-[0.1em] text-[#f5f1eb] max-md:block">KURIO</span>
           <nav aria-label="Acesso à conta" className="hidden h-5 items-center justify-center gap-2 md:flex">
