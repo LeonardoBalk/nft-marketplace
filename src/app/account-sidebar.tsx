@@ -7,8 +7,6 @@ const itemClass = 'flex h-[45px] items-center gap-3 px-4 text-[15px] leading-[45
 
 // fora do escopo: aparecem como no desenho, sem hover e sem link; o aviso fica para leitor de tela
 const pendingItems = [
-  { label: 'Atividade', icon: ShoppingBag },
-  { label: 'Lista de interesse', icon: Heart },
   { label: 'Ofertas', icon: Activity },
   { label: 'Arquivos baixados', icon: Download },
   { label: 'Suporte', icon: TriangleAlert },
@@ -30,6 +28,15 @@ export function AccountSidebar({ active }: { active: 'profile' | 'wallets' }) {
         Carteiras
       </Link>
 
+      <span aria-disabled="true" className={`${itemClass} text-[#e89b55]`}>
+        <ShoppingBag size={18} strokeWidth={1.8} className="text-[#b39463]" aria-hidden="true" />
+        Atividade<span className="sr-only"> (fora do escopo desta entrega)</span>
+      </span>
+      {/* a lista de interesse é a página de favoritos */}
+      <Link to="/favoritos" search={{ page: 1 }} className={`${itemClass} text-[#e89b55] hover:bg-[#2f1d15]`}>
+        <Heart size={18} strokeWidth={1.8} className="text-[#b39463]" aria-hidden="true" />
+        Lista de interesse
+      </Link>
       {pendingItems.map((item) => <span key={item.label} aria-disabled="true" className={`${itemClass} text-[#e89b55]`}>
         <item.icon size={18} strokeWidth={1.8} className="text-[#b39463]" aria-hidden="true" />
         {item.label}<span className="sr-only"> (fora do escopo desta entrega)</span>

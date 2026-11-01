@@ -80,8 +80,9 @@ function WalletForm({ slot, wallet, onSaved }: { slot: WalletSlot; wallet: Colle
         {errors.address && <p role="alert" className="text-xs text-[#ffb59c]">{errors.address}</p>}
       </div>
       <div className="flex max-w-[417px] flex-col gap-[10px]">
-        <Label htmlFor={`${prefix}secondaryAddress`} className="sr-only">ENS ou carteira secundária (opcional)</Label>
-        <span aria-hidden="true" className="h-[29px]" />
+        {/* no desktop o rótulo some e a folga alinha o campo com a coluna ao lado; no mobile não há coluna */}
+        <Label htmlFor={`${prefix}secondaryAddress`} className="h-[29px] lg:sr-only">ENS ou carteira secundária</Label>
+        <span aria-hidden="true" className="hidden h-[29px] lg:block" />
         <Input id={`${prefix}secondaryAddress`} name="secondaryAddress" defaultValue={wallet?.secondaryAddress} placeholder="ENS ou carteira secundária (opcional)" maxLength={120} />
       </div>
       <div className="flex max-w-[417px] flex-col gap-[10px]">
@@ -155,7 +156,7 @@ function WalletsContent() {
       <section aria-labelledby="secondary-wallet-title" className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 id="secondary-wallet-title" className="text-[17px] font-bold leading-4">Carteira secundária</h2>
-          <div className="flex items-center gap-3">
+          <div className="grid w-full gap-3 sm:flex sm:w-auto sm:items-center">
             <Button type="button" variant="outline" disabled={!primary || saveWallet.isPending} onClick={() => { if (primary) saveWallet.mutate({ slot: 'secondary', input: { ...primary, nickname: `${primary.nickname} (secundária)` } }) }} className="h-9 min-h-0 rounded-[3px] px-4 text-sm">Igual à carteira principal</Button>
             <Button type="button" onClick={() => setSecondaryOpen(true)} className="h-9 min-h-0 rounded-[3px] px-4 text-sm font-bold">Adicionar</Button>
           </div>

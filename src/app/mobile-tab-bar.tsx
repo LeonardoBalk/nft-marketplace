@@ -30,6 +30,7 @@ const tabClass = 'absolute inline-flex size-11 -translate-x-1/2 cursor-pointer i
 
 export function MobileTabBar() {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
+  const onAccount = pathname === '/perfil' || pathname === '/carteiras'
   const href = useRouterState({ select: (state) => state.location.href })
   const { itemCount } = useCart()
   const { data: user } = useAuthSession()
@@ -78,7 +79,7 @@ export function MobileTabBar() {
           {itemCount > 0 && <span aria-hidden="true" className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-[#241612] bg-[#d28a4c] px-[2px] text-[10px] font-medium leading-none text-[#140d0a]">{itemCount}</span>}
         </Link>
         {user
-          ? <Link to="/perfil" aria-label="Perfil" aria-current={pathname === '/perfil' ? 'page' : undefined} className={`${tabClass} left-[calc(85.51%+10px)] top-[59px] ${tone(pathname === '/perfil')}`}><User size={20} fill="currentColor" strokeWidth={1.5} aria-hidden="true" /></Link>
+          ? <Link to="/perfil" aria-label="Perfil" aria-current={onAccount ? 'page' : undefined} className={`${tabClass} left-[calc(85.51%+10px)] top-[59px] ${tone(onAccount)}`}><User size={20} fill="currentColor" strokeWidth={1.5} aria-hidden="true" /></Link>
           : <button type="button" aria-label="Entrar" onClick={() => openAuth('login', href)} className={`${tabClass} left-[calc(85.51%+10px)] top-[59px] ${tone(false)}`}><User size={20} fill="currentColor" strokeWidth={1.5} aria-hidden="true" /></button>}
       </div>
     </nav>
