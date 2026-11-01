@@ -34,7 +34,7 @@ export function NftCard({ nft, featuredRow = false, staggeredMobile = false, com
           <p className={`flex flex-wrap items-baseline gap-x-2 text-base font-bold leading-4 text-[#e89b55] lg:h-4 lg:flex-nowrap lg:gap-3 lg:overflow-visible ${compact ? '' : 'lg:text-[18px]'}`}>{nft.priceEth} ETH{nft.oldPriceEth && <span className="text-base font-normal leading-4 text-[#b39463] lg:text-[18px]">{nft.oldPriceEth} ETH</span>}</p>
         </div>
       </Link>
-      {/* fora do Link: um botão dentro de uma âncora não é html válido nem navegável por teclado */}
+      {/* o botão fica fora do link para manter o html válido e acessível */}
       {/* no desktop o coração aparece no hover ou no foco; peça já favoritada mostra o estado sempre */}
       <FavoriteButton nftId={nft.id} nftName={nft.name} size={15} className={`absolute right-[11px] top-3 size-7 rounded-full lg:right-3 lg:size-8 lg:opacity-0 lg:transition-opacity lg:group-hover/card:opacity-100 lg:focus-visible:opacity-100 lg:aria-pressed:opacity-100 ${compact ? 'lg:top-8' : 'lg:top-9'}`} />
     </li>

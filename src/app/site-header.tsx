@@ -42,7 +42,7 @@ export function SiteHeader() {
       <div className="flex h-[45px] items-start justify-between gap-5 px-5 sm:px-8 xl:px-0">
         <Link to="/" search={defaultCatalogSearch} className="h-[34px] w-12 shrink-0 pt-[8px] text-sm font-bold tracking-[0.1em] text-[#f5f1eb] transition-colors hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-[#d28a4c] lg:w-40">KURIO</Link>
         <nav aria-label="Navegação principal" className="hidden h-[45px] w-[401px] flex-none items-start gap-10 text-base lg:flex">
-          {/* o router marca aria-current sozinho quando acha o link ativo; o activeOptions faz ele concordar com o destaque */}
+          {/* manter o link ativo alinhado ao destaque visual */}
           <Link to="/" search={defaultCatalogSearch} activeOptions={exactAnchor} aria-current={homeActive ? 'page' : undefined} className={navClass(homeActive)}>Início</Link>
           <Link to="/" search={defaultCatalogSearch} hash="catalogo" activeOptions={exactAnchor} aria-current={marketActive ? 'page' : undefined} className={navClass(marketActive)}>Mercado</Link>
           {/* fora do escopo: aparecem como no desenho, sem hover e sem link; o aviso fica para leitor de tela */}

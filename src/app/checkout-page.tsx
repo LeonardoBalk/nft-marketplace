@@ -31,7 +31,7 @@ const walletProviderOptions = [
   { value: 'coinbase', label: 'Coinbase Wallet' },
 ] as const
 
-// assinatura da cotação: também cobre disponibilidade e versão de cada NFT
+// assinatura da cotação inclui disponibilidade e versão de cada nft
 function quoteOf(cart: CartSummary | undefined | null) {
   return cart ? cartQuoteFingerprint(cart) : null
 }
@@ -115,7 +115,7 @@ export function CheckoutPage() {
     if (!user || !idempotencyKey.current || recoveryAttempted.current) return
     recoveryAttempted.current = true
     void checkSavedOrder()
-    // This is a one-time recovery for a key left by a previous page load.
+    // recuperar uma vez a chave salva no carregamento anterior
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
@@ -293,7 +293,7 @@ export function CheckoutPage() {
             <Link to="/carteiras" className="text-sm leading-5 text-[#e89b55] underline transition-colors hover:text-[#f5f1eb] focus-visible:outline-2 focus-visible:outline-[#d28a4c]">Gerenciar carteiras</Link>
           </div>}
 
-          {/* a chave remonta o form quando a carteira chega, para os defaultValue valerem */}
+          {/* remontar o formulário ao trocar de carteira para preencher os valores */}
           {user && (profile.isPending || wallets.isPending) ? <p role="status" className="text-sm text-[#cfb28c]">Carregando dados do pagamento…</p> : <form id="checkout-form" key={`${walletSlot}-${savedWallet?.address ?? ''}-${profile.data?.username ?? ''}`} noValidate onSubmit={(event) => void submit(event)} className="grid gap-6 sm:grid-cols-2">
             <Field label="Nome de exibição" required htmlFor="displayName" error={errors.displayName}>
               <Input id="displayName" name="displayName" autoComplete="name" maxLength={80} defaultValue={savedWallet?.displayName ?? profile.data?.displayName ?? ''} aria-invalid={Boolean(errors.displayName)} aria-describedby={errors.displayName ? 'displayName-error' : undefined} />

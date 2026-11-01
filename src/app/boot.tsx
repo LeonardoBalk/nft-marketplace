@@ -41,7 +41,7 @@ const app = (
 )
 const root = document.getElementById('root')!
 if (initialState) {
-  // Resolve the same route matches used for the server render before hydrating.
+  // resolver as mesmas rotas do servidor antes de hidratar
   router.ssr = { manifest: undefined }
   void router.load().then(() => hydrateRoot(root, app))
 } else createRoot(root).render(app)

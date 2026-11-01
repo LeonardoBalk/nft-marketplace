@@ -87,8 +87,7 @@ export function useCheckout() {
       try {
         return (await request()).data
       } catch (error) {
-        // O servidor pode ter criado o pedido antes da resposta se perder. A mesma
-        // chave devolve o pedido original e nunca inicia uma segunda compra.
+        // repetir com a mesma chave recupera o pedido sem duplicar a compra
         if (isAxiosError(error) && (error.response?.status === 504 || !error.response)) {
           return (await request()).data
         }
@@ -127,7 +126,7 @@ export function orderQuery(orderId: string) {
 
 export async function mergeGuestCart(): Promise<CartSummary> {
   const response = await api.post<CartSummary>('/cart/merge')
-  // Preserve a identidade de visitante em caso de falha, para permitir retomar.
+  // preservar a identidade visitante se a união falhar
   rotateGuestId()
   return response.data
 }

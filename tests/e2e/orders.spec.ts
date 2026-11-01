@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 async function signUp(page: import('@playwright/test').Page, email: string) {
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
-  // desktop tem a aba "Criar conta"; no mobile o modal leva o link "Crie uma conta"
+  // abrir o cadastro no desktop ou no mobile
   await dialog.getByRole('button', { name: /^(Criar conta|Crie uma conta)$/ }).first().click()
   await page.locator('#auth-name').fill('Leonardo Balk')
   await page.locator('#auth-email').fill(email)

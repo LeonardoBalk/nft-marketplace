@@ -50,7 +50,7 @@ test('pedido pendente só liquida quando o relógio alcança o prazo da simulaç
   await page.goto(`/pedido/${created.body.orderId}`)
   await expect(page.getByRole('heading', { name: 'Pedido em processamento' })).toBeVisible()
 
-  // pausa depois que a página terminou de carregar para não bloquear o React.
+  // pausar após o carregamento para não bloquear o react
   await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000))
   // antes do prazo nada muda, nem com o polling rodando
   await page.clock.runFor(40_000)

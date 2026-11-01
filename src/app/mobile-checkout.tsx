@@ -13,7 +13,7 @@ const providers: Array<{ value: string; label: string; mark: ReactNode }> = [
   { value: 'coinbase', label: 'Coinbase Wallet', mark: <Wallet size={22} strokeWidth={1.5} className="text-[#d28a4c]" aria-hidden="true" /> },
 ]
 
-// o cartão mostra o ens quando existe; sem ele, o endereço encurtado como no frame (0xA91F…E82C)
+// mostrar o ens ou o endereço encurtado no cartão
 function walletLine(wallet: CollectorWallet) {
   return wallet.ensName ? `${wallet.ensName}${wallet.ensSuffix}` : `${wallet.address.slice(0, 6)}…${wallet.address.slice(-4)}`
 }

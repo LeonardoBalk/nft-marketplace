@@ -5,8 +5,7 @@ import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-// Vite's SPA fallback serves the root index for extensionless deep links.
-// Preview must serve a prerendered NFT document first, like the static host.
+// a prévia serve o detalhe pré-renderizado antes do fallback da spa
 function previewPrerenderedPages(): Plugin {
   return {
     name: 'kurio:preview-prerendered-pages',

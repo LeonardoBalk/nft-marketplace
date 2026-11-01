@@ -57,7 +57,7 @@ function JournalCarousel() {
     setActive((current) => (current === next ? current : next))
   }
 
-  // rola só a faixa: scrollIntoView também mexeria na página quando o card não está inteiro na tela
+  // rolar só a faixa para não mover a página junto
   const goTo = (index: number) => {
     const strip = stripRef.current
     const card = strip?.firstElementChild as HTMLElement | null

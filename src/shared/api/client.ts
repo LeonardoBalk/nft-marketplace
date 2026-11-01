@@ -21,7 +21,7 @@ api.interceptors.response.use(
     if (axios.isAxiosError(error) && error.response?.status === 401) {
       const currentToken = getAccessToken()
       const sentToken = error.config?.headers?.Authorization
-      // A late 401 from a previous session must not invalidate a newer login.
+      // um 401 de sessão anterior não invalida o login atual
       if (currentToken && sentToken === `Bearer ${currentToken}`) {
         clearAccessToken()
         if (typeof window !== 'undefined') window.dispatchEvent(new Event('kurio:session-expired'))

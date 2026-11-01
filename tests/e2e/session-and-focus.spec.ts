@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 
-// png 1x1 válido: o avatar precisa de uma imagem de verdade para o FileReader
+// png 1x1 válido para testar a leitura do avatar
 const tinyPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')
 
 async function logIn(page: Page, email: string) {

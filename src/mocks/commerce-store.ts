@@ -136,7 +136,7 @@ export function mergeGuestCart(user: AuthUser, guestId: string | null): CartSumm
     const nft = getNft(guestItem.nftId)
     if (!nft) continue
     const existing = userItems.find((entry) => entry.nftId === guestItem.nftId && entry.edition === guestItem.edition)
-    // Preserve guest items even when stock changed; checkout requires adjustment.
+    // preservar itens do visitante quando o estoque mudar
     const quantity = guestItem.quantity + (existing?.quantity ?? 0)
     if (existing) {
       const index = userItems.findIndex((entry) => entry.nftId === guestItem.nftId && entry.edition === guestItem.edition)

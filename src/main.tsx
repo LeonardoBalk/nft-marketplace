@@ -10,7 +10,7 @@ function start() {
   }
   void import('./app/boot')
 }
-// Deixe o HTML pré-renderizado pintar antes de avaliar React e MSW.
+// pintar o html pré-renderizado antes de iniciar react e msw
 let started = false
 const startOnce = () => {
   if (started) return
@@ -18,5 +18,5 @@ const startOnce = () => {
   start()
 }
 requestAnimationFrame(() => window.setTimeout(startOnce, 100))
-// Abas abertas em segundo plano podem pausar requestAnimationFrame.
+// iniciar também quando a aba em segundo plano pausar a animação
 if (document.hidden) window.setTimeout(startOnce, 1000)

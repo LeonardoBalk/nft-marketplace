@@ -11,8 +11,7 @@ try {
   const { fixtureIds, renderPage } = await vite.ssrLoadModule('/src/prerender.tsx')
   for (const url of ['/', ...fixtureIds().map((id) => `/nft/${encodeURIComponent(id)}`)]) {
     const { html, state } = await renderPage(url)
-    // React 19 emits image resource hints before the rendered tree. Keep them
-    // in the document head so they do not become children of the hydration root.
+    // mover os preloads de imagens para o head antes da hidratação
     const hints = html.match(/^(?:<link rel="preload"[^>]*\/>)+/)?.[0] ?? ''
     const body = html.replace(/^(?:<link rel="preload"[^>]*\/>)+/, '')
     const serialized = JSON.stringify(state).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029')

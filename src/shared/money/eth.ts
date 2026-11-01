@@ -6,7 +6,7 @@ export function ethToWei(value: string): bigint {
   return BigInt(whole) * 10n ** BigInt(ETH_DECIMALS) + BigInt(fraction.padEnd(ETH_DECIMALS, '0'))
 }
 
-/** Present ETH without converting the decimal string to a floating-point number. */
+/** formatar eth sem converter a string decimal em ponto flutuante */
 export function formatEth(value: string | undefined): string {
   const [whole, fraction = ''] = (value ?? '0').split('.')
   return `${whole}.${fraction.padEnd(2, '0')}`

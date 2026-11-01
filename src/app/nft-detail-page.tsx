@@ -64,7 +64,7 @@ export function NftDetailPage() {
 
   return <>
     <main className="relative mx-auto max-w-[1200px] bg-[linear-gradient(143.28deg,#241612_-12%,#2f1d15_106.59%)] bg-[length:100%_506px] bg-no-repeat px-[26px] pt-[23px] sm:px-8 lg:bg-none lg:pb-6 lg:pt-8 xl:px-0">
-      {/* dois botões de favoritar, um por frame; getByRole só enxerga o que está visível */}
+      {/* um botão de favorito para cada layout */}
       <div className="mb-2 flex items-center justify-between lg:hidden">
         <Link to="/" search={lastCatalogSearch()} hash="catalogo" aria-label="Voltar ao catálogo" className="inline-flex size-[35px] items-center justify-center rounded-full border border-[#3f2319] bg-[#2f1d15] text-[#cfb28c] transition-colors hover:border-[#d28a4c] hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d99558]"><ChevronLeft size={20} strokeWidth={1.5} aria-hidden="true" /></Link>
         <FavoriteButton nftId={item.id} nftName={item.name} size={16} className="size-[35px] rounded-full border-[#3f2319] bg-[#2f1d15] text-[#e89b55]" />
@@ -135,7 +135,7 @@ export function NftDetailPage() {
           <div className="fixed inset-x-0 bottom-0 z-30 flex flex-col gap-5 rounded-t-[40px] bg-[#241612] px-6 pb-[max(36px,env(safe-area-inset-bottom))] pt-5 shadow-[0_0_20px_rgba(10,6,4,0.45)] lg:static lg:z-auto lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-4 lg:rounded-none lg:bg-transparent lg:p-0 lg:shadow-none">
             <div className="flex items-center gap-2 lg:gap-3">
               <span aria-hidden="true" className="text-[15px] font-medium leading-4 text-[#cfb28c] lg:hidden">Qtd.</span>
-              {/* stepper encostado no "Qtd." e preço empurrado para a direita, como no frame */}
+              {/* stepper junto à quantidade e preço à direita */}
               <div className="mr-auto flex items-center gap-3 lg:mr-0">
               <button type="button" aria-label="Diminuir quantidade" disabled={quantity <= 1} onClick={() => setQuantity(Math.max(1, quantity - 1))} className="flex h-[30px] w-5 cursor-pointer items-center justify-center rounded-full border border-[#140d0a] bg-[#d28a4c] text-black shadow-[0_4px_12px_-2px_rgba(20,13,10,0.15)] lg:h-[49.5px] lg:w-[33px] lg:shadow-[0_6.6px_19.8px_-3.3px_rgba(20,13,10,0.15)] transition-colors hover:bg-[#e89b55] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d99558] disabled:pointer-events-none disabled:opacity-50"><Minus size={14} strokeWidth={2.5} className="lg:size-[22px]" /></button>
               <output aria-label="Quantidade" className="min-w-[13px] text-center text-[18px] font-medium leading-[25px] lg:text-xl lg:font-normal lg:leading-7">{quantity}</output>
