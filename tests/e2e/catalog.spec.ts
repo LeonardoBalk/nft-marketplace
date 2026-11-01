@@ -114,3 +114,40 @@ test.describe('busca no mobile', () => {
     await expect(page).toHaveURL(/q=Golden/)
   })
 })
+
+
+test('resposta antiga da busca não substitui o resultado mais recente', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('html[data-mocks-ready="true"]')).toHaveCount(1)
+  await page.getByRole('button', { name: 'Abrir busca' }).click()
+  await page.evaluate(async () => {
+    await fetch('/api/demo/scenario', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ latencySequenceMs: [2500, 0], latencyMs: 0 }),
+    })
+  })
+  const search = page.getByLabel('Buscar NFTs')
+  const firstRequest = page.waitForRequest((request) => request.url().includes('/api/nfts?') && request.url().includes('q=Emerald'))
+  await search.fill('Emerald')
+  await expect(page).toHaveURL(/q=Emerald/)
+  await firstRequest
+  await search.fill('Golden')
+  await expect(page).toHaveURL(/q=Golden/)
+  await expect(page.locator('#catalogo').getByText('Golden Beat #207')).toBeVisible()
+  await page.waitForTimeout(3000)
+  await expect(page.locator('#catalogo').getByText('Golden Beat #207')).toBeVisible()
+  await expect(page.locator('#catalogo').getByText('Emerald Ape #042')).toHaveCount(0)
+})
+
+
+test('painel de demonstração abre sob demanda e devolve foco ao fechar', async ({ page }) => {
+  await page.goto('/')
+  const trigger = page.getByRole('button', { name: 'Abrir modo demonstração' })
+  await trigger.click()
+  const panel = page.getByRole('region', { name: 'Modo demonstração' })
+  await expect(panel).toBeVisible()
+  await expect(panel).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(panel).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Abrir modo demonstração' })).toBeFocused()
+})

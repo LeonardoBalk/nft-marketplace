@@ -1,6 +1,7 @@
 import { createRootRoute, createRoute, createRouter, Outlet, redirect, stripSearchParams, useNavigate, useRouterState, type RouterHistory } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { Wrench } from 'lucide-react'
 import { CatalogPage } from './catalog-page'
 import { SiteHeader } from './site-header'
 import { CartMergeNotice } from './cart-merge-notice'
@@ -37,6 +38,7 @@ function requireSession({ location }: { location: { href: string } }) {
 function RootLayout() {
   const mounted = useSyncExternalStore(() => () => {}, () => true, () => false)
   const [authModal, setAuthModal] = useState<AuthModalRequest | null>(null)
+  const [demoRequested, setDemoRequested] = useState(false)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const sessionExpiredHandled = useRef(false)
@@ -78,7 +80,14 @@ function RootLayout() {
     <MobileTabBar />
     {/* atalho para os cenários do msw; some quando os mocks estão desligados */}
     <Suspense fallback={null}>
-      {mounted && import.meta.env.VITE_ENABLE_MOCKS !== 'false' && <DemoPanel raised={!hideMobileNav} />}
+      {mounted && import.meta.env.VITE_ENABLE_MOCKS !== 'false' && (demoRequested
+        ? <DemoPanel raised={!hideMobileNav} initiallyOpen />
+        : <div data-demo-panel className={`fixed right-4 z-40 md:bottom-6 md:right-6 md:block ${!hideMobileNav ? 'bottom-[calc(150px+env(safe-area-inset-bottom))] block' : 'hidden'}`}>
+          <button type="button" aria-expanded="false" aria-label="Abrir modo demonstração" onClick={() => setDemoRequested(true)}
+            className="flex size-11 cursor-pointer items-center justify-center rounded-full border border-[#55321f] bg-[#241612]/95 text-[#e89b55] shadow-[0_8px_24px_rgba(20,13,10,0.5)] transition-colors hover:border-[#d28a4c] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d28a4c]">
+            <Wrench size={18} strokeWidth={1.8} aria-hidden="true" />
+          </button>
+        </div>)}
       {authModal && <AuthPage key={authModal.mode} mode={authModal.mode} redirect={authModal.redirect} onClose={closeAuth} />}
     </Suspense>
   </AuthModalContext.Provider>

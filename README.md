@@ -4,7 +4,7 @@ Kurio é um marketplace de NFTs feito em React e TypeScript para um desafio de f
 
 Os dados e as operações são simulados no navegador com MSW. A compra não transfere ativos, não movimenta ETH e não se conecta a uma blockchain. O projeto pode ser executado localmente sem backend ou credenciais externas.
 
-O [repositório do projeto](https://github.com/LeonardoBalk/nft-marketplace) está público. A [URL de demonstração cadastrada no GitHub](https://nft-marketplace-nu-blue.vercel.app/) respondeu `404` na verificação de 31/10/2026. Por isso, o deploy ainda não está comprovado como parte da entrega.
+O [repositório do projeto](https://github.com/LeonardoBalk/nft-marketplace) e a [demonstração pública](https://kurio-nft-mktplace.vercel.app/) estão disponíveis.
 
 ## Começar
 
@@ -27,7 +27,7 @@ Abra a URL exibida pelo Vite. Nenhuma variável de ambiente é obrigatória. Os 
 | `npm run test:e2e` | Executa os testes Playwright |
 | `npm run audit` | Executa as auditorias Lighthouse desktop e mobile |
 
-Para os testes E2E, instale o navegador do Playwright com `npx playwright install chromium` caso ainda não esteja disponível. Use `PLAYWRIGHT_PORT` se a porta 5174 estiver ocupada. Os resultados locais ficam em `playwright-report/` e `test-results/`. As configurações Lighthouse ficam em `lighthouse/`; `lighthouse-report/` recebe as novas execuções. As [medições registradas](docs/lighthouse/README.md) trazem ambiente, relatórios e medianas. Na rodada atual, a mediana de performance mobile foi 100 no início e no detalhe.
+Para os testes E2E, instale o navegador do Playwright com `npx playwright install chromium` caso ainda não esteja disponível. Use `PLAYWRIGHT_PORT` se a porta 5174 estiver ocupada. Os resultados locais ficam em `playwright-report/` e `test-results/`. As configurações Lighthouse ficam em `lighthouse/`; `lighthouse-report/` recebe as novas execuções. As [medições registradas](docs/lighthouse/README.md) trazem ambiente, relatórios e medianas. Na última rodada local, a mediana de performance mobile foi 86 no início e 90 no detalhe.
 
 ## Experimentar os fluxos
 
@@ -160,7 +160,7 @@ Os endpoints `/demo/*` são ferramentas para cenários locais e E2E, não contra
 
 ### Rotas e estado na URL
 
-`/` carrega busca, filtros, faixa de preço, ordenação, aba e página em parâmetros de busca validados por Zod. `/nft/:nftId` permite acesso direto ao detalhe. `/carrinho` é público para preservar o fluxo do visitante. `/checkout`, `/perfil`, `/carteiras` e `/favoritos` exigem token e guardam o destino para o retorno após a autenticação. `/entrar` abre o modal em qualquer rota. Quando a URL funciona como entrada protegida, ela carrega o modo e o destino pelos parâmetros de busca. `/pedido/:orderId` recupera o pedido do usuário e funciona após recarregar a página. Rotas desconhecidas usam `notFoundComponent`. O redirecionamento da Vercel envia rotas da SPA a `index.html`.
+`/` carrega busca, filtros, faixa de preço, ordenação, aba e página em parâmetros de busca validados por Zod. `/nft/:nftId` permite acesso direto ao detalhe. `/carrinho` é público para preservar o fluxo do visitante. `/checkout`, `/perfil`, `/carteiras` e `/favoritos` exigem token e guardam o destino para o retorno após a autenticação. `/entrar` abre o modal em qualquer rota. Quando a URL funciona como entrada protegida, ela carrega o modo e o destino pelos parâmetros de busca. `/pedido/:orderId` recupera o pedido do usuário e funciona após recarregar a página. Rotas desconhecidas usam `notFoundComponent`. A regra da Vercel usa `spa.html` como fallback para rotas sem arquivo correspondente.
 
 Filtros e navegação que precisam persistir após recarregar a página ou usar o histórico ficam na URL. O componente guarda o estado temporário de formulário, modal, senha visível e mensagens de retorno. O identificador do visitante fica no `localStorage`. A chave idempotente temporária fica em `sessionStorage`, para recuperar uma resposta perdida na mesma aba.
 
@@ -201,11 +201,11 @@ O *binding* tem limites. Ele é uma ponte de desenvolvimento entre MSW WebSocket
 
 O Playwright inicia um *build* otimizado e uma prévia em Chromium. Ele guarda o *trace* quando há falha. Os testes E2E devem partir de um contexto novo, controlar latência e eventos pela API de demonstração e observar o resultado na interface. O relatório HTML e os *traces* são artefatos de execução, não código-fonte. A regressão visual precisa de *baselines* versionadas, atualizadas deliberadamente quando o Figma mudar. A comparação deve usar o mesmo navegador, fonte e *viewport*.
 
-O Lighthouse está configurado para início e detalhe, com três medições e mediana em *desktop* e *mobile*. Os arquivos JSON definem os limites da auditoria; os resultados executados estão em [docs/lighthouse](docs/lighthouse/README.md), com versões, LCP, CLS e TBT. A performance mobile ficou abaixo da meta documentada. Para comparar uma mudança, repita a auditoria em uma máquina ou CI de referência, com os *mocks* ativos.
+O Lighthouse está configurado para início e detalhe, com três medições e mediana em *desktop* e *mobile*. Os arquivos JSON definem os limites da auditoria; os resultados executados estão em [docs/lighthouse](docs/lighthouse/README.md), com versões, LCP, CLS e TBT. Na última auditoria local, a mediana de performance mobile foi 86 no início e 90 no detalhe. Para comparar uma mudança, repita a auditoria em uma máquina ou CI de referência, com os *mocks* ativos.
 
 ### Deploy e limites
 
-`vercel.json` reescreve rotas SPA para `index.html`, permitindo acesso direto e refresh. Vercel hospeda o bundle estático; o Service Worker MSW executa no navegador e o binding Socket.IO é uma simulação local ao navegador. Isso serve à demonstração e não exige função serverless persistente. Se o requisito mudar para comunicação entre usuários/dispositivos ou evento no servidor, será necessário um backend e servidor Socket.IO hospedados, com CORS, autenticação e *rooms*. A publicação precisa ser conferida com acesso direto e recarregamento das rotas.
+`vercel.json` configura `spa.html` como fallback para as rotas da SPA. Vercel hospeda o bundle estático; o Service Worker MSW executa no navegador e o binding Socket.IO é uma simulação local ao navegador. Isso serve à demonstração e não exige função serverless persistente. Se o requisito mudar para comunicação entre usuários/dispositivos ou evento no servidor, será necessário um backend e servidor Socket.IO hospedados, com CORS, autenticação e *rooms*. A publicação precisa ser conferida com acesso direto e recarregamento das rotas.
 
 ### Trade-offs e decisões de UX
 
@@ -220,7 +220,7 @@ O Lighthouse está configurado para início e detalhe, com três medições e me
 - A confirmação de transação e o link de explorador são simulados e não transferem ativos reais.
 - Contagens/facets e parte do catálogo são fixtures determinísticas para cobrir filtros; não são contagens derivadas de um serviço de marketplace real.
 - O reset restaura catálogo e stores no contexto do navegador atual; múltiplos contextos não compartilham estado.
-- As medições Lighthouse registradas mostram performance mobile abaixo da meta de 90. Os *traces* E2E são gerados a cada execução; as *baselines* visuais ficam em `tests/e2e`. A URL pública precisa ser conferida após a publicação.
+- A última medição Lighthouse local atingiu 90 em performance mobile no detalhe e 86 no início. Os *traces* E2E são gerados a cada execução; as *baselines* visuais ficam em `tests/e2e`. A URL pública precisa ser conferida após a publicação.
 
 
 #### Galeria e precisão

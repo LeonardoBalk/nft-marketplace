@@ -54,6 +54,16 @@ test('carteiras salvam, validam endereço e persistem após refresh', async ({ p
   await signUp(page, 'carteiras-e2e@example.com')
 
   await expect(page.getByRole('heading', { name: 'Carteira principal' })).toBeVisible()
+  await page.getByRole('button', { name: 'Salvar carteira' }).click()
+  const invalidFields = page.locator('[id^="primary-"][aria-invalid="true"]')
+  expect(await invalidFields.count()).toBeGreaterThan(0)
+  for (const field of await invalidFields.all()) {
+    const describedBy = await field.getAttribute('aria-describedby')
+    expect(describedBy).toBeTruthy()
+    const message = page.locator(`[id="${describedBy}"]`)
+    await expect(message).toBeVisible()
+    await expect(field).toHaveAccessibleDescription(await message.innerText())
+  }
   await page.locator('#primary-displayName').fill('Leonardo Balk')
   await page.locator('#primary-nickname').fill('Carteira principal')
   await page.locator('#primary-network').click()

@@ -31,8 +31,8 @@ const actionButton = 'flex h-9 flex-1 cursor-pointer items-center justify-center
 const otherQueries = { predicate: (query: { queryKey: readonly unknown[] }) => query.queryKey[0] !== 'demo' }
 
 // só existe com os mocks ligados: troca o cenário do msw sem abrir o console
-export function DemoPanel({ raised }: { raised: boolean }) {
-  const [open, setOpen] = useState(false)
+export function DemoPanel({ raised, initiallyOpen = false }: { raised: boolean; initiallyOpen?: boolean }) {
+  const [open, setOpen] = useState(initiallyOpen)
   const panelId = useId()
   const panelRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)

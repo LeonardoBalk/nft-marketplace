@@ -54,12 +54,12 @@ function WalletForm({ slot, wallet, onSaved }: { slot: WalletSlot; wallet: Colle
       <div className="flex max-w-[417px] flex-col gap-[10px]">
         <Label htmlFor={`${prefix}displayName`} className="h-[29px]">Nome de exibição{requiredMark}</Label>
         <Input id={`${prefix}displayName`} name="displayName" defaultValue={wallet?.displayName} maxLength={80} aria-invalid={Boolean(errors.displayName)} />
-        {errors.displayName && <p id="${prefix}displayName-error" role="alert" className="text-xs text-[#ffb59c]">{errors.displayName}</p>}
+        {errors.displayName && <p id={`${prefix}displayName-error`} role="alert" className="text-xs text-[#ffb59c]">{errors.displayName}</p>}
       </div>
       <div className="flex max-w-[417px] flex-col gap-[10px]">
         <Label htmlFor={`${prefix}nickname`} className="h-[29px]">Apelido da carteira{requiredMark}</Label>
         <Input id={`${prefix}nickname`} name="nickname" defaultValue={wallet?.nickname} maxLength={60} aria-invalid={Boolean(errors.nickname)} />
-        {errors.nickname && <p id="${prefix}nickname-error" role="alert" className="text-xs text-[#ffb59c]">{errors.nickname}</p>}
+        {errors.nickname && <p id={`${prefix}nickname-error`} role="alert" className="text-xs text-[#ffb59c]">{errors.nickname}</p>}
       </div>
       <div className="flex max-w-[417px] flex-col gap-[10px]">
         <Label htmlFor={`${prefix}network`} className="h-[29px]">Rede{requiredMark}</Label>
@@ -67,17 +67,17 @@ function WalletForm({ slot, wallet, onSaved }: { slot: WalletSlot; wallet: Colle
           <SelectTrigger id={`${prefix}network`} aria-invalid={Boolean(errors.network)}><SelectValue placeholder="Selecione uma rede" /></SelectTrigger>
           <SelectContent>{walletNetworks.map((value) => <SelectItem key={value} value={value}>{networkLabels[value]}</SelectItem>)}</SelectContent>
         </Select>
-        {errors.network && <p id="${prefix}network-error" role="alert" className="text-xs text-[#ffb59c]">{errors.network}</p>}
+        {errors.network && <p id={`${prefix}network-error`} role="alert" className="text-xs text-[#ffb59c]">{errors.network}</p>}
       </div>
       <div className="flex max-w-[417px] flex-col gap-[10px]">
         <Label htmlFor={`${prefix}profileName`} className="h-[29px]">Nome do perfil{requiredMark}</Label>
         <Input id={`${prefix}profileName`} name="profileName" defaultValue={wallet?.profileName} maxLength={80} aria-invalid={Boolean(errors.profileName)} />
-        {errors.profileName && <p id="${prefix}profileName-error" role="alert" className="text-xs text-[#ffb59c]">{errors.profileName}</p>}
+        {errors.profileName && <p id={`${prefix}profileName-error`} role="alert" className="text-xs text-[#ffb59c]">{errors.profileName}</p>}
       </div>
       <div className="flex max-w-[417px] flex-col gap-[10px]">
         <Label htmlFor={`${prefix}address`} className="h-[29px]">Endereço da carteira{requiredMark}</Label>
         <Input id={`${prefix}address`} name="address" defaultValue={wallet?.address} placeholder="Endereço 0x da carteira" maxLength={42} aria-invalid={Boolean(errors.address)} />
-        {errors.address && <p id="${prefix}address-error" role="alert" className="text-xs text-[#ffb59c]">{errors.address}</p>}
+        {errors.address && <p id={`${prefix}address-error`} role="alert" className="text-xs text-[#ffb59c]">{errors.address}</p>}
       </div>
       <div className="flex max-w-[417px] flex-col gap-[10px]">
         {/* no desktop o rótulo some e a folga alinha o campo com a coluna ao lado; no mobile não há coluna */}
@@ -91,17 +91,17 @@ function WalletForm({ slot, wallet, onSaved }: { slot: WalletSlot; wallet: Colle
           <SelectTrigger id={`${prefix}type`} aria-invalid={Boolean(errors.type)}><SelectValue placeholder="Selecione uma carteira" /></SelectTrigger>
           <SelectContent>{walletTypes.map((value) => <SelectItem key={value} value={value}>{walletLabels[value]}</SelectItem>)}</SelectContent>
         </Select>
-        {errors.type && <p id="${prefix}type-error" role="alert" className="text-xs text-[#ffb59c]">{errors.type}</p>}
+        {errors.type && <p id={`${prefix}type-error`} role="alert" className="text-xs text-[#ffb59c]">{errors.type}</p>}
       </div>
       <div className="flex max-w-[417px] flex-col gap-[10px]">
         <Label htmlFor={`${prefix}referralCode`} className="h-[29px]">Código de indicação{requiredMark}</Label>
         <Input id={`${prefix}referralCode`} name="referralCode" defaultValue={wallet?.referralCode} maxLength={40} aria-invalid={Boolean(errors.referralCode)} />
-        {errors.referralCode && <p id="${prefix}referralCode-error" role="alert" className="text-xs text-[#ffb59c]">{errors.referralCode}</p>}
+        {errors.referralCode && <p id={`${prefix}referralCode-error`} role="alert" className="text-xs text-[#ffb59c]">{errors.referralCode}</p>}
       </div>
       <div className="flex max-w-[417px] flex-col gap-[10px]">
         <Label htmlFor={`${prefix}email`} className="h-[29px]">E-mail{requiredMark}</Label>
         <Input id={`${prefix}email`} name="email" type="email" defaultValue={wallet?.email} aria-invalid={Boolean(errors.email)} />
-        {errors.email && <p id="${prefix}email-error" role="alert" className="text-xs text-[#ffb59c]">{errors.email}</p>}
+        {errors.email && <p id={`${prefix}email-error`} role="alert" className="text-xs text-[#ffb59c]">{errors.email}</p>}
       </div>
       <div className="flex max-w-[417px] flex-col gap-[10px]">
         <Label htmlFor={`${prefix}ensName`} className="h-[29px]">Nome ENS{requiredMark}</Label>

@@ -32,3 +32,25 @@ test('hidratação reconcilia preço e estoque persistidos sem erro', async ({ p
     expect(errors.filter((error) => /hydration|react error #4(18|23)/i.test(error))).toEqual([])
   }
 })
+
+
+test('busca só aceita texto depois da hidratação', async ({ page }) => {
+  let releaseScripts!: () => void
+  const scriptsReady = new Promise<void>((resolve) => { releaseScripts = resolve })
+  await page.route(/\.js(?:\?.*)?$/, async (route) => {
+    await scriptsReady
+    await route.continue()
+  })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/', { waitUntil: 'commit' })
+  const search = page.locator('#buscar')
+  await expect(search).toBeVisible()
+  await expect(search).toBeDisabled()
+  await expect(search).toHaveAttribute('placeholder', 'Carregando busca...')
+  releaseScripts()
+  await expect(search).toBeEnabled()
+  await search.fill('Golden')
+  await search.press('Enter')
+  await expect(search).toHaveValue('Golden')
+  await expect(page).toHaveURL(/q=Golden/i)
+})
