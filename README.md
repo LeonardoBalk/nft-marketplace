@@ -29,6 +29,12 @@ Abra a URL exibida pelo Vite. Nenhuma variável de ambiente é obrigatória. Os 
 
 Para os testes E2E, instale o navegador do Playwright com `npx playwright install chromium` caso ainda não esteja disponível. Use `PLAYWRIGHT_PORT` se a porta 5174 estiver ocupada. Os resultados locais ficam em `playwright-report/` e `test-results/`. As configurações Lighthouse ficam em `lighthouse/`; `lighthouse-report/` recebe as novas execuções. As [medições registradas](docs/lighthouse/README.md) trazem ambiente, relatórios e medianas. Na última rodada local, a mediana de performance mobile foi 86 no início e 90 no detalhe. Na URL publicada, foi 92 e 93.
 
+## Auditoria de dependências
+
+`npm audit` apontou 23 ocorrências nas dependências de desenvolvimento: 15 moderadas e 8 altas. A consulta `npm audit --omit=dev` não apontou ocorrências. Isso não garante ausência de outras falhas.
+
+As substituições de `basic-ftp` e `tmp` em `overrides` reduzem avisos nas dependências indiretas das ferramentas. O Lighthouse CI e as verificações do projeto precisam passar depois de cada alteração. Os avisos restantes incluem a cadeia de extração de arquivos e a versão de `zod` usada pelo Lighthouse. A versão atual do Lighthouse CI fixa dependências para as quais o `npm audit` sugere trocas incompatíveis. Não aplique `npm audit fix --force` sem avaliar e testar a migração.
+
 ## Experimentar os fluxos
 
 Há duas contas de demonstração:
