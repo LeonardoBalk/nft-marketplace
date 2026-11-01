@@ -1,4 +1,4 @@
-import { createRootRoute, createRoute, createRouter, Outlet, redirect, useNavigate, useRouterState } from '@tanstack/react-router'
+import { createRootRoute, createRoute, createRouter, Outlet, redirect, stripSearchParams, useNavigate, useRouterState } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CatalogPage } from './catalog-page'
@@ -81,7 +81,10 @@ const catalogRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   component: CatalogPage,
-  validateSearch: (search) => catalogSearchSchema.parse(search),
+  // o schema direto (standard schema) tipa a entrada da url; cada campo tem .catch, então nunca lança
+  validateSearch: catalogSearchSchema,
+  // a url guarda só o que difere do padrão: o catálogo sem filtro é "/", e o que falta volta pelo schema
+  search: { middlewares: [stripSearchParams(defaultCatalogSearch)] },
 })
 
 const nftDetailRoute = createRoute({

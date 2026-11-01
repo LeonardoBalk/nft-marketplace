@@ -94,7 +94,7 @@ test('carrinho de visitante sobrevive ao cadastro e fecha a compra', async ({ pa
   await receipt.getByRole('button', { name: 'Ver no Etherscan' }).click()
   await expect(receipt.getByText(/Transação simulada/)).toBeVisible()
   await receipt.getByRole('button', { name: 'Fechar' }).click()
-  await expect(page).toHaveURL(/\/\?/)
+  await expect(page).toHaveURL(/^https?:\/\/[^/]+\/(\?[^#]*)?(#.*)?$/)
 })
 
 test('checkout valida o perfil e aplica cupom', async ({ page }) => {

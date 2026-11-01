@@ -94,7 +94,7 @@ test('menu do avatar leva à conta e sair limpa o header e deixa a tela privada'
 
   await avatar.click()
   await page.getByRole('menuitem', { name: 'Sair' }).click()
-  await expect(page).toHaveURL(/\/\?/)
+  await expect(page).toHaveURL(/^https?:\/\/[^/]+\/(\?[^#]*)?(#.*)?$/)
   await expect(page.getByRole('button', { name: 'Entrar' })).toBeVisible()
   await expect(avatar).toHaveCount(0)
 })
@@ -115,6 +115,6 @@ test.describe('login e cadastro no mobile', () => {
     await expect(dialog).toBeVisible()
     await dialog.getByRole('button', { name: 'Voltar' }).click()
     await expect(dialog).toBeHidden()
-    await expect(page).toHaveURL(/\/\?/)
+    await expect(page).toHaveURL(/^https?:\/\/[^/]+\/(\?[^#]*)?(#.*)?$/)
   })
 })
