@@ -163,7 +163,8 @@ export function NftDetailPage() {
             </dl>
             <div className="hidden items-center gap-2 lg:flex">
               <h2 className="text-[15px] font-bold leading-4">Compartilhar este NFT:</h2>
-              {shareLinks.map((share) => <span key={share.name} role="img" aria-label={`Compartilhar no ${share.name}`} className="flex cursor-pointer items-center text-[#f5f1eb] transition-colors hover:text-[#e89b55]">{share.icon}</span>)}
+              {/* compartilhar não existe nesta entrega: ícones pelo desenho, sem hover */}
+              {shareLinks.map((share) => <span key={share.name} role="img" aria-label={`Compartilhar no ${share.name} (fora do escopo desta entrega)`} className="flex items-center text-[#f5f1eb]">{share.icon}</span>)}
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
-import { useState } from 'react'
 import { Button } from '../components/ui/button'
+import { defaultCatalogSearch } from '../features/catalog/contracts'
 
 const socialIcons = [
   { name: 'Facebook', width: 8, height: 16, svg: <svg viewBox="0 0 8 16" width="8" height="16" aria-hidden="true"><path fill="currentColor" d="M5.2 16V8.7h2.4L8 5.9H5.2V4.2c0-.8.3-1.4 1.5-1.4H8V.2C7.4.1 6.6 0 5.5 0 3.2 0 1.7 1.4 1.7 4v1.9H0v2.8h1.7V16z" /></svg> },
@@ -11,9 +11,15 @@ const socialIcons = [
 ]
 
 
-export function SiteFooter() {
-  const [newsletterSubmitted, setNewsletterSubmitted] = useState(false)
+const footerLink = 'transition-colors hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-[#d28a4c]'
+const footerCollections = ['Arte digital', 'Fotografia', 'Música', 'Arte 3D', 'Utilidade']
 
+// destino fora do escopo: aparece como no desenho, sem hover e sem ação; o aviso fica para leitor de tela
+function OutOfScope({ label }: { label: string }) {
+  return <li aria-disabled="true">{label}<span className="sr-only"> (fora do escopo desta entrega)</span></li>
+}
+
+export function SiteFooter() {
   // o frame mobile não tem rodapé: lá a navegação vive na tab bar
   return <footer className="mx-auto mt-24 hidden max-w-[1200px] px-5 sm:px-8 md:block lg:px-0">
   <div className="grid grid-cols-[minmax(0,1fr)] gap-8 bg-[#241612] p-8 sm:grid-cols-[repeat(2,minmax(0,1fr))] lg:h-[250px] lg:grid-cols-[repeat(3,minmax(0,1fr))_357px] lg:gap-0">
@@ -28,38 +34,56 @@ export function SiteFooter() {
     </article>)}
     <div className="flex flex-col gap-3 px-4 lg:h-[202px] lg:justify-center">
       <h2 className="max-w-[325px] text-lg font-bold leading-4">Antecipe-se ao próximo lançamento</h2>
-      <form className="flex h-10 w-full max-w-[325px] overflow-hidden rounded-md bg-[#38220f] shadow-[0_0_20px_rgba(10,6,4,0.45)]" onSubmit={(event) => { event.preventDefault(); setNewsletterSubmitted(true) }}>
-        <label className="sr-only" htmlFor="newsletter-email">Seu e-mail</label>
-        <input id="newsletter-email" type="email" required placeholder="digite seu e-mail..." className="min-w-0 flex-1 bg-transparent pl-3 text-sm text-[#f5f1eb] placeholder:text-[#b39463] focus-visible:outline-2 focus-visible:outline-[#d99558]" />
-        <Button type="submit" className="h-10 w-[85px] min-h-0 flex-none gap-0 rounded-l-none rounded-r-md bg-[#d28a4c] px-0 text-lg font-bold text-[#140d0a] hover:bg-[#e39a5f]">{newsletterSubmitted ? 'Enviado' : 'Enviar'}</Button>
+      {/* newsletter fora do escopo: mantém o desenho, mas não finge uma inscrição que nenhuma api recebe */}
+      <form aria-disabled="true" className="flex h-10 w-full max-w-[325px] overflow-hidden rounded-md bg-[#38220f] shadow-[0_0_20px_rgba(10,6,4,0.45)]" onSubmit={(event) => event.preventDefault()}>
+        <label className="sr-only" htmlFor="newsletter-email">Seu e-mail (fora do escopo desta entrega)</label>
+        <input id="newsletter-email" type="email" disabled placeholder="digite seu e-mail..." className="min-w-0 flex-1 bg-transparent pl-3 text-sm text-[#f5f1eb] placeholder:text-[#b39463]" />
+        <Button type="submit" disabled className="h-10 w-[85px] min-h-0 flex-none gap-0 rounded-l-none rounded-r-md bg-[#d28a4c] px-0 text-lg font-bold text-[#140d0a] disabled:opacity-100">Enviar</Button>
       </form>
-      <p role={newsletterSubmitted ? 'status' : undefined} className="max-w-[325px] text-[13px] leading-[22px] text-[#cfb28c]">{newsletterSubmitted ? 'Inscrição realizada.' : 'Receba lançamentos selecionados, histórias de criadores e novidades do mercado.'}</p>
+      <p className="max-w-[325px] text-[13px] leading-[22px] text-[#cfb28c]">Receba lançamentos selecionados, histórias de criadores e novidades do mercado.</p>
     </div>
   </div>
   <div className="flex flex-col gap-5 bg-[#38220f] px-8 py-6 sm:grid sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-center sm:gap-0 lg:flex lg:h-[88px] lg:flex-row lg:justify-between lg:py-0">
     <strong className="text-sm tracking-[0.1em] lg:w-[210px]">KURIO</strong>
     <span className="text-sm leading-[22px] lg:w-[210px]"><span className="whitespace-nowrap">Feito para colecionadores,</span><br /><span className="whitespace-nowrap">criadores e cultura</span></span>
-    <a href="mailto:contato@email.com" className="text-sm leading-[22px] transition-colors hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-[#d28a4c] lg:w-[210px]">contato@email.com</a>
-    <a href="tel:+551140028922" className="text-sm leading-[22px] transition-colors hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-[#d28a4c] lg:w-[228px]">+55 11 4002 8922</a>
+    {/* contatos do desenho são fictícios: texto, sem link nem hover */}
+    <span className="text-sm leading-[22px] lg:w-[210px]">contato@email.com</span>
+    <span className="text-sm leading-[22px] lg:w-[228px]">+55 11 4002 8922</span>
   </div>
   <div className="flex flex-col gap-8 bg-[#241612] px-8 py-8 sm:grid sm:grid-cols-[repeat(2,minmax(0,1fr))] lg:flex lg:h-[236px] lg:flex-row lg:items-start lg:justify-between">
     <div className="flex flex-col gap-2 lg:w-[178.67px]">
       <h2 className="text-lg font-bold leading-4">Meu perfil</h2>
-      <ul className="text-sm leading-[30px]"><li><Link to="/perfil" className="transition-colors hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-[#d28a4c]">Meu perfil</Link></li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Minha coleção</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Atividade</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Estúdio do criador</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Lista de interesse</li></ul>
+      <ul className="text-sm leading-[30px]">
+        <li><Link to="/perfil" className={footerLink}>Meu perfil</Link></li>
+        <OutOfScope label="Minha coleção" />
+        <OutOfScope label="Atividade" />
+        <OutOfScope label="Estúdio do criador" />
+        <li><Link to="/favoritos" search={{ page: 1 }} className={footerLink}>Lista de interesse</Link></li>
+      </ul>
     </div>
     <div className="flex flex-col gap-2 lg:w-[178.67px]">
       <h2 className="text-lg font-bold leading-4">Central de ajuda</h2>
-      <ul className="text-sm leading-[30px]"><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Central de ajuda</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Como comprar NFTs</li><li><Link to="/carteiras" className="transition-colors hover:text-[#e89b55] focus-visible:outline-2 focus-visible:outline-[#d28a4c]">Carteira e segurança</Link></li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Política do mercado</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Denunciar item</li></ul>
+      <ul className="text-sm leading-[30px]">
+        <OutOfScope label="Central de ajuda" />
+        <OutOfScope label="Como comprar NFTs" />
+        <li><Link to="/carteiras" className={footerLink}>Carteira e segurança</Link></li>
+        <OutOfScope label="Política do mercado" />
+        <OutOfScope label="Denunciar item" />
+      </ul>
     </div>
     <div className="flex flex-col gap-2 lg:w-[178.67px]">
       <h2 className="text-lg font-bold leading-4">Coleções</h2>
-      <ul className="text-sm leading-[30px]"><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Arte digital</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Fotografia</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Música</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Arte 3D</li><li className="cursor-pointer transition-colors hover:text-[#e89b55]">Utilidade</li></ul>
+      <ul className="text-sm leading-[30px]">
+        {/* as coleções do rodapé existem no catálogo: cada uma abre a grade já filtrada */}
+        {footerCollections.map((category) => <li key={category}><Link to="/" search={{ ...defaultCatalogSearch, category }} hash="catalogo" className={footerLink}>{category}</Link></li>)}
+      </ul>
     </div>
     <div className="flex flex-col gap-8 lg:w-[228px]">
       <div className="flex w-[190px] flex-col gap-5">
         <h2 className="h-4 text-lg font-bold leading-4">Redes sociais</h2>
         <div className="flex h-[30px] w-[190px] items-center gap-[10px]" role="group" aria-label="Redes sociais">
-          {socialIcons.map((social) => <span key={social.name} role="img" aria-label={social.name} className="flex size-[30px] cursor-pointer items-center justify-center rounded border border-[#d28a4c] text-[#d28a4c] transition-all hover:scale-105 hover:border-[#e89b55] hover:bg-[#38220f] hover:text-[#e89b55]">{social.svg}</span>)}
+          {/* perfis sociais não existem nesta entrega: ícones pelo desenho, sem hover */}
+          {socialIcons.map((social) => <span key={social.name} role="img" aria-label={`${social.name} (fora do escopo desta entrega)`} className="flex size-[30px] items-center justify-center rounded border border-[#d28a4c] text-[#d28a4c]">{social.svg}</span>)}
         </div>
       </div>
       <div className="flex w-[228px] flex-col gap-3">
