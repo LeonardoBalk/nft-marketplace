@@ -11,6 +11,7 @@ import { CheckoutPage } from './checkout-page'
 import { OrderConfirmationPage } from './order-confirmation-page'
 import { SiteHeader } from './site-header'
 import { MobileTabBar, hidesMobileNav } from './mobile-tab-bar'
+import { DemoPanel } from './demo-panel'
 import { AuthPage } from './auth-page'
 import { AuthGatePage } from './auth-gate-page'
 import { authSearchSchema } from '../features/auth/contracts'
@@ -65,6 +66,8 @@ function RootLayout() {
     {/* folga para o conteúdo não terminar embaixo da tab bar fixa */}
     {!hideMobileNav && <div aria-hidden="true" className="h-[calc(136px+env(safe-area-inset-bottom))] md:hidden" />}
     <MobileTabBar />
+    {/* atalho para os cenários do msw; some quando os mocks estão desligados */}
+    {import.meta.env.VITE_ENABLE_MOCKS !== 'false' && <DemoPanel raised={!hideMobileNav} />}
     {authModal && <AuthPage key={authModal.mode} mode={authModal.mode} redirect={authModal.redirect} onClose={closeAuth} />}
   </AuthModalContext.Provider>
 }
