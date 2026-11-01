@@ -1,5 +1,21 @@
 # Auditoria Lighthouse
 
+
+## Auditoria da versão publicada
+
+A URL publicada foi medida após o deploy do commit `6007874`. Foram três execuções por página e perfil. Os relatórios estão em [`publicado/mobile`](./publicado/mobile/) e [`publicado/desktop`](./publicado/desktop/). Os valores são medianas; LCP e TBT estão em milissegundos.
+
+| Página e perfil | Performance | Acessibilidade | Boas práticas | SEO | LCP | CLS | TBT |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Início mobile | 92 | 100 | 96 | 100 | 3079 | 0 | 132 |
+| Detalhe mobile | 93 | 100 | 96 | 100 | 2854 | 0 | 148 |
+| Início desktop | 100 | 97 | 96 | 100 | 605 | 0 | 0 |
+| Detalhe desktop | 100 | 100 | 96 | 100 | 325 | 0 | 0 |
+
+As notas individuais de performance mobile foram 92, 91 e 92 no início, e 98, 92 e 93 no detalhe. O perfil mobile usa limitação simulada de rede e CPU. Os 68 testes E2E passaram contra a URL publicada.
+
+Também medi o evento de conclusão da hidratação em três visitas novas por página, em Chromium com *viewport* mobile, sem limitação de rede ou CPU. Os tempos foram 558, 447 e 411 ms no início, e 448, 416 e 433 ms no detalhe. A mediana foi 447 ms e 433 ms. Esses tempos não são comparáveis diretamente aos do Lighthouse com limitação simulada e não substituem os testes de interação.
+
 ## Reavaliação após as correções de busca e carteiras
 
 Depois, uma rodada com o painel de demonstração carregado sob demanda registrou performance mobile de 86 no início e 90 no detalhe. As notas foram 86, 86 e 87 no início, e 90 nas três medições do detalhe. O LCP mediano foi 3760 ms e 3312 ms; o TBT foi 126 ms e 93 ms, e o CLS foi 0 em ambas as páginas. Os relatórios estão em [`reavaliacao/painel-sob-demanda`](./reavaliacao/painel-sob-demanda/). O índice de velocidade da máquina variou entre as rodadas, por isso a diferença não comprova o efeito isolado da mudança.

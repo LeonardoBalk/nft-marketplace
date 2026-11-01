@@ -120,7 +120,7 @@ O *binding* tem limites. Ele é uma ponte de desenvolvimento entre MSW WebSocket
 
 O Playwright inicia um *build* otimizado e uma prévia em Chromium. Ele guarda o *trace* quando há falha. Os testes E2E devem partir de um contexto novo, controlar latência e eventos pela API de demonstração e observar o resultado na interface. O relatório HTML e os *traces* são artefatos de execução, não código-fonte. A regressão visual precisa de *baselines* versionadas, atualizadas deliberadamente quando o Figma mudar. A comparação deve usar o mesmo navegador, fonte e *viewport*.
 
-O Lighthouse está configurado para início e detalhe, com três medições e mediana em *desktop* e *mobile*. Os arquivos JSON definem os limites da auditoria; os resultados executados estão em [docs/lighthouse](docs/lighthouse/README.md), com versões, LCP, CLS e TBT. Na última auditoria local, a mediana de performance mobile foi 86 no início e 90 no detalhe. Para comparar uma mudança, repita a auditoria em uma máquina ou CI de referência, com os *mocks* ativos.
+O Lighthouse está configurado para início e detalhe, com três medições e mediana em *desktop* e *mobile*. Os arquivos JSON definem os limites da auditoria; os resultados executados estão em [docs/lighthouse](docs/lighthouse/README.md), com versões, LCP, CLS e TBT. Na última auditoria local, a mediana de performance mobile foi 86 no início e 90 no detalhe. Na URL publicada, foi 92 e 93. Para comparar uma mudança, repita a auditoria em uma máquina ou CI de referência, com os *mocks* ativos.
 
 ### Deploy e limites
 

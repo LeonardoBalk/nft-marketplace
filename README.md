@@ -27,7 +27,7 @@ Abra a URL exibida pelo Vite. Nenhuma variável de ambiente é obrigatória. Os 
 | `npm run test:e2e` | Executa os testes Playwright |
 | `npm run audit` | Executa as auditorias Lighthouse desktop e mobile |
 
-Para os testes E2E, instale o navegador do Playwright com `npx playwright install chromium` caso ainda não esteja disponível. Use `PLAYWRIGHT_PORT` se a porta 5174 estiver ocupada. Os resultados locais ficam em `playwright-report/` e `test-results/`. As configurações Lighthouse ficam em `lighthouse/`; `lighthouse-report/` recebe as novas execuções. As [medições registradas](docs/lighthouse/README.md) trazem ambiente, relatórios e medianas. Na última rodada local, a mediana de performance mobile foi 86 no início e 90 no detalhe.
+Para os testes E2E, instale o navegador do Playwright com `npx playwright install chromium` caso ainda não esteja disponível. Use `PLAYWRIGHT_PORT` se a porta 5174 estiver ocupada. Os resultados locais ficam em `playwright-report/` e `test-results/`. As configurações Lighthouse ficam em `lighthouse/`; `lighthouse-report/` recebe as novas execuções. As [medições registradas](docs/lighthouse/README.md) trazem ambiente, relatórios e medianas. Na última rodada local, a mediana de performance mobile foi 86 no início e 90 no detalhe. Na URL publicada, foi 92 e 93.
 
 ## Experimentar os fluxos
 
@@ -201,7 +201,7 @@ O *binding* tem limites. Ele é uma ponte de desenvolvimento entre MSW WebSocket
 
 O Playwright inicia um *build* otimizado e uma prévia em Chromium. Ele guarda o *trace* quando há falha. Os testes E2E devem partir de um contexto novo, controlar latência e eventos pela API de demonstração e observar o resultado na interface. O relatório HTML e os *traces* são artefatos de execução, não código-fonte. A regressão visual precisa de *baselines* versionadas, atualizadas deliberadamente quando o Figma mudar. A comparação deve usar o mesmo navegador, fonte e *viewport*.
 
-O Lighthouse está configurado para início e detalhe, com três medições e mediana em *desktop* e *mobile*. Os arquivos JSON definem os limites da auditoria; os resultados executados estão em [docs/lighthouse](docs/lighthouse/README.md), com versões, LCP, CLS e TBT. Na última auditoria local, a mediana de performance mobile foi 86 no início e 90 no detalhe. Para comparar uma mudança, repita a auditoria em uma máquina ou CI de referência, com os *mocks* ativos.
+O Lighthouse está configurado para início e detalhe, com três medições e mediana em *desktop* e *mobile*. Os arquivos JSON definem os limites da auditoria; os resultados executados estão em [docs/lighthouse](docs/lighthouse/README.md), com versões, LCP, CLS e TBT. Na última auditoria local, a mediana de performance mobile foi 86 no início e 90 no detalhe. Na URL publicada, foi 92 e 93. Para comparar uma mudança, repita a auditoria em uma máquina ou CI de referência, com os *mocks* ativos.
 
 ### Deploy e limites
 
