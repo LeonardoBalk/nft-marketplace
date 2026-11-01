@@ -18,7 +18,7 @@ import { useProfile, useWallets } from '../features/account/queries'
 import { useAuthModal } from '../features/auth/modal-context'
 import { useAuthSession } from '../features/auth/queries'
 import { cartQuoteFingerprint, checkoutSchema, ensSuffixes, walletNetworks, walletTypes, type CartSummary, type CheckoutRequest } from '../features/cart/contracts'
-import { cartQuery, useApplyCoupon, useCart, useCheckout, useConnectWallet } from '../features/cart/queries'
+import { cartQuery, recoverOrder, useApplyCoupon, useCart, useCheckout, useConnectWallet } from '../features/cart/queries'
 import { defaultCatalogSearch } from '../features/catalog/contracts'
 import { useMediaQuery } from '../shared/ui/use-media-query'
 
@@ -49,15 +49,15 @@ function Field({ label, required = false, hideLabel = false, htmlFor, error, chi
       </Label>
       {hideLabel && <span aria-hidden="true" className="h-[29px]" />}
       {children}
-      {error && <p role="alert" className="mt-1 text-xs text-[#ffb59c]">{error}</p>}
+      {error && <p id={`${htmlFor}-error`} role="alert" className="mt-1 text-xs text-[#ffb59c]">{error}</p>}
     </div>
   )
 }
 
-function SelectField({ id, name, placeholder, defaultValue, options }: { id: string; name: string; placeholder: string; defaultValue?: string; options: ReadonlyArray<{ value: string; label: string }> }) {
+function SelectField({ id, name, placeholder, defaultValue, options, error }: { id: string; name: string; placeholder: string; defaultValue?: string; options: ReadonlyArray<{ value: string; label: string }>; error?: string }) {
   return (
     <Select name={name} defaultValue={defaultValue}>
-      <SelectTrigger id={id}><SelectValue placeholder={placeholder} /></SelectTrigger>
+      <SelectTrigger id={id} aria-invalid={Boolean(error)} aria-describedby={error ? `${id}-error` : undefined}><SelectValue placeholder={placeholder} /></SelectTrigger>
       <SelectContent>{options.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
     </Select>
   )
@@ -83,6 +83,9 @@ export function CheckoutPage() {
   const [savedWalletError, setSavedWalletError] = useState<string | null>(null)
   const [preflightError, setPreflightError] = useState<string | null>(null)
   const [preflightPending, setPreflightPending] = useState(false)
+  const [recoveryPending, setRecoveryPending] = useState(false)
+  const [recoveryFailed, setRecoveryFailed] = useState(false)
+  const recoveryAttempted = useRef(false)
   const confirmingRef = useRef(false)
   const [connectedWallet, setConnectedWallet] = useState<{ provider: string; connectionId: string } | null>(null)
   const [walletConnectionError, setWalletConnectionError] = useState<string | null>(null)
@@ -91,6 +94,30 @@ export function CheckoutPage() {
   const savedWallet = (walletSlot === 'secondary' ? wallets.data?.secondary ?? wallets.data?.primary : wallets.data?.primary ?? wallets.data?.secondary) ?? null
   const currentQuote = quoteOf(cart)
   const quoteChanged = reviewedQuote !== null && currentQuote !== null && currentQuote !== reviewedQuote
+
+  const checkSavedOrder = async () => {
+    const key = idempotencyKey.current
+    if (!key) return
+    setRecoveryPending(true)
+    try {
+      const order = await recoverOrder(key)
+      idempotencyKey.current = null
+      sessionStorage.removeItem('kurio.checkout.idempotency.v1')
+      void navigate({ to: '/pedido/$orderId', params: { orderId: order.orderId }, replace: true })
+    } catch {
+      setRecoveryFailed(true)
+    } finally {
+      setRecoveryPending(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!user || !idempotencyKey.current || recoveryAttempted.current) return
+    recoveryAttempted.current = true
+    void checkSavedOrder()
+    // This is a one-time recovery for a key left by a previous page load.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
 
   useEffect(() => {
     // a primeira cotação vista vira a referência; mudança pede nova confirmação
@@ -149,6 +176,7 @@ export function CheckoutPage() {
       void navigate({ to: '/pedido/$orderId', params: { orderId: order.orderId }, replace: true })
     } catch (error) {
       // retomar checkout sem perder o carrinho
+      if (isAxiosError(error) && (error.response?.status === 504 || !error.response)) void checkSavedOrder()
       if (isAxiosError(error) && error.response?.status === 401) openAuth('login', '/checkout')
       if (isAxiosError(error) && error.response?.data?.code === 'WALLET_DISCONNECTED') {
         setConnectedWallet(null)
@@ -220,6 +248,7 @@ export function CheckoutPage() {
 
   // o frame mobile troca o form pelas carteiras salvas; a confirmação é a mesma
   if (!isDesktop) return <>
+    {recoveryFailed && <div role="alert" className="mx-5 mt-4 flex items-center gap-3 text-sm text-[#ffb59c]">Não foi possível verificar o pedido. <button type="button" disabled={recoveryPending} onClick={() => void checkSavedOrder()} className="text-[#e89b55] underline">Verificar pedido</button></div>}
     <MobileCheckout
       signedIn={Boolean(user)}
       wallets={wallets.data}
@@ -265,36 +294,36 @@ export function CheckoutPage() {
           </div>}
 
           {/* a chave remonta o form quando a carteira chega, para os defaultValue valerem */}
-          <form id="checkout-form" key={`${walletSlot}-${savedWallet?.address ?? ''}-${profile.data?.username ?? ''}`} noValidate onSubmit={(event) => void submit(event)} className="grid gap-6 sm:grid-cols-2">
+          {user && (profile.isPending || wallets.isPending) ? <p role="status" className="text-sm text-[#cfb28c]">Carregando dados do pagamento…</p> : <form id="checkout-form" key={`${walletSlot}-${savedWallet?.address ?? ''}-${profile.data?.username ?? ''}`} noValidate onSubmit={(event) => void submit(event)} className="grid gap-6 sm:grid-cols-2">
             <Field label="Nome de exibição" required htmlFor="displayName" error={errors.displayName}>
-              <Input id="displayName" name="displayName" autoComplete="name" maxLength={80} defaultValue={savedWallet?.displayName ?? profile.data?.displayName ?? ''} />
+              <Input id="displayName" name="displayName" autoComplete="name" maxLength={80} defaultValue={savedWallet?.displayName ?? profile.data?.displayName ?? ''} aria-invalid={Boolean(errors.displayName)} aria-describedby={errors.displayName ? 'displayName-error' : undefined} />
             </Field>
             <Field label="Nome de usuário" required htmlFor="username" error={errors.username}>
-              <Input id="username" name="username" autoComplete="username" maxLength={80} defaultValue={profile.data?.username ?? ''} />
+              <Input id="username" name="username" autoComplete="username" maxLength={80} defaultValue={profile.data?.username ?? ''} aria-invalid={Boolean(errors.username)} aria-describedby={errors.username ? 'username-error' : undefined} />
             </Field>
             <Field label="Rede" required htmlFor="network" error={errors.network}>
-              <SelectField id="network" name="network" placeholder="Selecione uma rede" defaultValue={savedWallet?.network} options={walletNetworks.map((value) => ({ value, label: networkLabels[value] }))} />
+              <SelectField id="network" name="network" placeholder="Selecione uma rede" defaultValue={savedWallet?.network} options={walletNetworks.map((value) => ({ value, label: networkLabels[value] }))} error={errors.network} />
             </Field>
             <Field label="Nome do perfil" required htmlFor="profileName" error={errors.profileName}>
-              <Input id="profileName" name="profileName" maxLength={80} defaultValue={savedWallet?.profileName ?? ''} />
+              <Input id="profileName" name="profileName" maxLength={80} defaultValue={savedWallet?.profileName ?? ''} aria-invalid={Boolean(errors.profileName)} aria-describedby={errors.profileName ? 'profileName-error' : undefined} />
             </Field>
             <Field label="Endereço da carteira" required htmlFor="walletAddress" error={errors.walletAddress}>
-              <Input id="walletAddress" name="walletAddress" placeholder="Endereço 0x da carteira" maxLength={42} defaultValue={savedWallet?.address ?? ''} aria-invalid={Boolean(errors.walletAddress)} />
+              <Input id="walletAddress" name="walletAddress" placeholder="Endereço 0x da carteira" maxLength={42} defaultValue={savedWallet?.address ?? ''} aria-invalid={Boolean(errors.walletAddress)} aria-describedby={errors.walletAddress ? 'walletAddress-error' : undefined} />
             </Field>
             <Field label="Carteira secundária" hideLabel htmlFor="secondaryWallet" error={errors.secondaryWallet}>
-              <Input id="secondaryWallet" name="secondaryWallet" placeholder="ENS ou carteira secundária (opcional)" maxLength={120} defaultValue={savedWallet?.secondaryAddress ?? ''} />
+              <Input id="secondaryWallet" name="secondaryWallet" placeholder="ENS ou carteira secundária (opcional)" maxLength={120} defaultValue={savedWallet?.secondaryAddress ?? ''} aria-invalid={Boolean(errors.secondaryWallet)} aria-describedby={errors.secondaryWallet ? 'secondaryWallet-error' : undefined} />
             </Field>
             <Field label="Tipo de carteira" required htmlFor="walletType" error={errors.walletType}>
-              <SelectField id="walletType" name="walletType" placeholder="Selecione uma carteira" defaultValue={savedWallet?.type} options={walletTypes.map((value) => ({ value, label: walletLabels[value] }))} />
+              <SelectField id="walletType" name="walletType" placeholder="Selecione uma carteira" defaultValue={savedWallet?.type} options={walletTypes.map((value) => ({ value, label: walletLabels[value] }))} error={errors.walletType} />
             </Field>
             <Field label="Código de indicação" required htmlFor="referralCode" error={errors.referralCode}>
-              <Input id="referralCode" name="referralCode" maxLength={40} defaultValue={savedWallet?.referralCode ?? ''} />
+              <Input id="referralCode" name="referralCode" maxLength={40} defaultValue={savedWallet?.referralCode ?? ''} aria-invalid={Boolean(errors.referralCode)} aria-describedby={errors.referralCode ? 'referralCode-error' : undefined} />
             </Field>
             <Field label="E-mail" required htmlFor="email" error={errors.email}>
-              <Input id="email" name="email" type="email" autoComplete="email" defaultValue={savedWallet?.email ?? profile.data?.email ?? ''} aria-invalid={Boolean(errors.email)} />
+              <Input id="email" name="email" type="email" autoComplete="email" defaultValue={savedWallet?.email ?? profile.data?.email ?? ''} aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? 'email-error' : undefined} />
             </Field>
             <Field label="Nome ENS" required htmlFor="ensSuffix" error={errors.ensSuffix}>
-              <div className="w-[92px]"><SelectField id="ensSuffix" name="ensSuffix" placeholder=".eth" defaultValue={savedWallet?.ensSuffix ?? profile.data?.ensSuffix ?? '.eth'} options={ensSuffixes.map((value) => ({ value, label: value }))} /></div>
+              <div className="w-[92px]"><SelectField id="ensSuffix" name="ensSuffix" placeholder=".eth" defaultValue={savedWallet?.ensSuffix ?? profile.data?.ensSuffix ?? '.eth'} options={ensSuffixes.map((value) => ({ value, label: value }))} error={errors.ensSuffix} /></div>
             </Field>
             <div className="flex items-center gap-2 sm:col-span-2">
               <Checkbox id="useOtherWallet" name="useOtherWallet" />
@@ -304,7 +333,7 @@ export function CheckoutPage() {
               <Label htmlFor="note">Observação do colecionador (opcional)</Label>
               <Textarea id="note" name="note" maxLength={500} rows={6} className="max-h-60 max-w-[350px] resize-y overflow-y-auto" />
             </div>
-          </form>
+          </form>}
         </section>
 
         <section aria-labelledby="order-title" className="flex flex-col gap-3">
@@ -379,6 +408,7 @@ export function CheckoutPage() {
           </div>}
 
           <Button type="submit" form="checkout-form" disabled={checkout.isPending || preflightPending || items.length === 0 || quoteChanged} className="mt-1 h-[45px] w-full min-h-0 rounded-[6px] text-base font-bold">{preflightPending ? 'Atualizando valores…' : checkout.isPending ? 'Confirmando…' : 'Confirmar compra'}</Button>
+          {recoveryFailed && <button type="button" disabled={recoveryPending} onClick={() => void checkSavedOrder()} className="text-left text-sm text-[#e89b55] underline">{recoveryPending ? 'Verificando pedido…' : 'Verificar pedido'}</button>}
           {(walletConnectionError ?? checkoutError ?? preflightError) && <p role="alert" className="text-xs text-[#ffb59c]">{walletConnectionError ?? checkoutError ?? preflightError}</p>}
           {!user && <p className="text-xs leading-5 text-[#cfb28c]">Você entra na conta ao confirmar; o carrinho continua o mesmo depois disso.</p>}
           <Link to="/" search={defaultCatalogSearch} hash="catalogo" className="text-center text-[15px] leading-5 text-[#e89b55] transition-colors hover:text-[#f5f1eb] focus-visible:outline-2 focus-visible:outline-[#d28a4c]">Continuar explorando</Link>

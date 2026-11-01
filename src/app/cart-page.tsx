@@ -139,7 +139,9 @@ export function CartPage() {
             {cart?.couponCode && <p role="status" className="text-xs text-[#e89b55]">Cupom {cart.couponCode} aplicado.</p>}
           </form>
 
-          <div className="flex flex-col gap-3">
+          {isPending ? <div role="status" aria-label="Carregando resumo da carteira" className="flex flex-col gap-4">
+            <Skeleton className="h-5 w-full" /><Skeleton className="h-5 w-4/5" /><Skeleton className="h-5 w-full" /><Skeleton className="h-8 w-full" />
+          </div> : <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between text-[15px] leading-5">
               <span>Subtotal</span>
               <span className="text-[18px] leading-4">{formatEth(cart?.subtotalEth)} ETH</span>
@@ -153,11 +155,11 @@ export function CartPage() {
               <span className="text-[18px] leading-4">{cart?.networkFeeEth ?? '0'} ETH</span>
             </div>
             <p className="text-right text-xs leading-4 text-[#e89b55]">Taxa estimada</p>
-          </div>
-          <div className="flex items-center justify-between">
+          </div>}
+          {!isPending && <div className="flex items-center justify-between">
             <span className="text-base font-bold leading-4">Total</span>
             <span className="text-[18px] font-bold leading-4 text-[#e89b55]">{cart?.totalEth ?? '0'} ETH</span>
-          </div>
+          </div>}
 
           <div className="flex flex-col items-center gap-3">
             <Button type="button" disabled={items.length === 0 || hasUnavailable} onClick={connectAndCheckout} className="h-10 w-full min-h-0 rounded-[3px] text-[15px] font-bold leading-4">{user ? 'Finalizar' : 'Conectar e finalizar'}</Button>

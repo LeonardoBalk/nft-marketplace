@@ -44,6 +44,7 @@ test('faixa de preço filtra sem perder precisão decimal', async ({ page }) => 
 
 test('loading lento mostra skeleton e falha HTTP permite tentar novamente', async ({ page }) => {
   await page.goto('/')
+  await expect(page.locator('html[data-mocks-ready="true"]')).toHaveCount(1)
   await page.evaluate(async () => {
     await fetch('/api/demo/scenario', {
       method: 'PUT',
@@ -55,6 +56,7 @@ test('loading lento mostra skeleton e falha HTTP permite tentar novamente', asyn
   await page.goto('/nft/emerald-ape-043')
   await expect(page.getByRole('status')).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Emerald Ape #043' })).toBeVisible({ timeout: 10_000 })
+  await expect(page.locator('html[data-mocks-ready="true"]')).toHaveCount(1)
 
   await page.evaluate(async () => {
     await fetch('/api/demo/scenario', {

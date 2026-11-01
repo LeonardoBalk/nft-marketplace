@@ -1,18 +1,11 @@
-import { createRootRoute, createRoute, createRouter, Outlet, redirect, stripSearchParams, useNavigate, useRouterState } from '@tanstack/react-router'
+import { createRootRoute, createRoute, createRouter, Outlet, redirect, stripSearchParams, useNavigate, useRouterState, type RouterHistory } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { CatalogPage } from './catalog-page'
-import { NftDetailPage } from './nft-detail-page'
-import { CartPage } from './cart-page'
-import { FavoritesPage } from './favorites-page'
-import { ProfilePage } from './profile-page'
-import { WalletsPage } from './wallets-page'
-import { CheckoutPage } from './checkout-page'
-import { OrderConfirmationPage } from './order-confirmation-page'
 import { SiteHeader } from './site-header'
+import { CartMergeNotice } from './cart-merge-notice'
 import { MobileTabBar, hidesMobileNav } from './mobile-tab-bar'
-import { DemoPanel } from './demo-panel'
-import { AuthPage } from './auth-page'
+import { NftDetailPage } from './nft-detail-page'
 import { AuthGatePage } from './auth-gate-page'
 import { authSearchSchema } from '../features/auth/contracts'
 import { AuthModalContext, type AuthModalRequest } from '../features/auth/modal-context'
@@ -21,12 +14,28 @@ import { authKeys } from '../features/auth/queries'
 import { catalogSearchSchema, defaultCatalogSearch } from '../features/catalog/contracts'
 import { favoritesSearchSchema } from '../features/favorites/contracts'
 
+// início e detalhe são portas de entrada (link direto, auditoria): ficam no pacote principal, sem uma ida extra à rede
+// o modal de autenticação e o painel de demonstração só aparecem depois de um clique
+const AuthPage = lazy(() => import('./auth-page').then((module) => ({ default: module.AuthPage })))
+const DemoPanel = lazy(() => import('./demo-panel').then((module) => ({ default: module.DemoPanel })))
+const CartPage = lazy(() => import('./cart-page').then((module) => ({ default: module.CartPage })))
+const FavoritesPage = lazy(() => import('./favorites-page').then((module) => ({ default: module.FavoritesPage })))
+const ProfilePage = lazy(() => import('./profile-page').then((module) => ({ default: module.ProfilePage })))
+const WalletsPage = lazy(() => import('./wallets-page').then((module) => ({ default: module.WalletsPage })))
+const CheckoutPage = lazy(() => import('./checkout-page').then((module) => ({ default: module.CheckoutPage })))
+const OrderConfirmationPage = lazy(() => import('./order-confirmation-page').then((module) => ({ default: module.OrderConfirmationPage })))
+
+function RouteLoading() {
+  return <main role="status" className="mx-auto max-w-[1200px] px-5 py-14"><span className="sr-only">Carregando página...</span><div className="h-80 animate-pulse rounded-lg bg-[#2f1d15] motion-reduce:animate-none" /></main>
+}
+
 // barra o fluxo privado antes de montar a tela e guarda o destino para retomar
 function requireSession({ location }: { location: { href: string } }) {
   if (!getAccessToken()) throw redirect({ to: '/entrar', search: { mode: 'login' as const, redirect: location.href } })
 }
 
 function RootLayout() {
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false)
   const [authModal, setAuthModal] = useState<AuthModalRequest | null>(null)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -62,13 +71,16 @@ function RootLayout() {
   return <AuthModalContext.Provider value={authModalContext}>
     {/* a confirmação é o cartão do recibo sozinho na página, sem header */}
     {!onReceiptRoute && <SiteHeader />}
-    <Outlet />
+    <CartMergeNotice />
+    <Suspense fallback={<RouteLoading />}><Outlet /></Suspense>
     {/* folga para o conteúdo não terminar embaixo da tab bar fixa */}
     {!hideMobileNav && <div aria-hidden="true" className="h-[calc(136px+env(safe-area-inset-bottom))] md:hidden" />}
     <MobileTabBar />
     {/* atalho para os cenários do msw; some quando os mocks estão desligados */}
-    {import.meta.env.VITE_ENABLE_MOCKS !== 'false' && <DemoPanel raised={!hideMobileNav} />}
-    {authModal && <AuthPage key={authModal.mode} mode={authModal.mode} redirect={authModal.redirect} onClose={closeAuth} />}
+    <Suspense fallback={null}>
+      {mounted && import.meta.env.VITE_ENABLE_MOCKS !== 'false' && <DemoPanel raised={!hideMobileNav} />}
+      {authModal && <AuthPage key={authModal.mode} mode={authModal.mode} redirect={authModal.redirect} onClose={closeAuth} />}
+    </Suspense>
   </AuthModalContext.Provider>
 }
 
@@ -142,7 +154,11 @@ const checkoutRoute = createRoute({
   beforeLoad: requireSession,
 })
 
-export const router = createRouter({ routeTree: rootRoute.addChildren([catalogRoute, nftDetailRoute, cartRoute, checkoutRoute, authGateRoute, profileRoute, walletsRoute, favoritesRoute, orderRoute]) })
+const routeTree = rootRoute.addChildren([catalogRoute, nftDetailRoute, cartRoute, checkoutRoute, authGateRoute, profileRoute, walletsRoute, favoritesRoute, orderRoute])
+export function createAppRouter(history?: RouterHistory) {
+  return createRouter({ routeTree, history })
+}
+export const router = createAppRouter()
 
 declare module '@tanstack/react-router' {
   interface Register {

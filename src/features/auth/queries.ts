@@ -15,7 +15,13 @@ async function establishSession(path: '/auth/login' | '/auth/register', payload:
   setAccessToken(data.accessToken)
   window.dispatchEvent(new Event('kurio:session-restored'))
   // manter carrinho de visitante apos autenticacao
-  await mergeGuestCart()
+  try {
+    await mergeGuestCart()
+    sessionStorage.removeItem('kurio.cart.merge-pending.v1')
+  } catch {
+    sessionStorage.setItem('kurio.cart.merge-pending.v1', '1')
+    window.dispatchEvent(new Event('kurio:cart-merge-failed'))
+  }
   return data.user
 }
 

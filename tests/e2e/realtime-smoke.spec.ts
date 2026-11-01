@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test'
 
 test('a catalog change reaches the page through Socket.IO', async ({ page }) => {
   await page.goto('/')
+  await expect(page.locator('html[data-mocks-ready="true"]')).toHaveCount(1)
   const emerald = page.locator('#catalogo a[href="/nft/emerald-ape-042"]')
   await expect(emerald.getByText('1.19 ETH')).toBeVisible()
 

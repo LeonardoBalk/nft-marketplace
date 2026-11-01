@@ -100,6 +100,7 @@ export function MobileCart({ cart, items, isPending, isError, hasUnavailable, si
             {coupon.isError && <p role="alert" className="mt-2 text-xs text-[#ffb59c]">{errorOf(coupon.error, 'Não foi possível aplicar o cupom.')}</p>}
             {cart?.couponCode && <p role="status" className="mt-2 text-xs text-[#e89b55]">Cupom {cart.couponCode} aplicado.</p>}
           </form>
+          {isPending ? <div role="status" aria-label="Carregando resumo da compra" className="flex flex-col gap-4"><Skeleton className="h-5 w-full" /><Skeleton className="h-5 w-4/5" /><Skeleton className="h-5 w-full" /><Skeleton className="h-7 w-full" /></div> : <>
           <div className="flex items-start justify-between text-[15px] leading-5 text-[#f5f1eb]"><span>Subtotal</span><span className="text-base leading-4">{formatEth(cart?.subtotalEth)} ETH</span></div>
           <div className="flex items-start justify-between text-[15px] leading-5 text-[#f5f1eb]"><span>Desconto do lançamento</span><span>(-) {formatEth(cart?.discountEth)}</span></div>
           <div className="flex flex-col items-end">
@@ -107,6 +108,7 @@ export function MobileCart({ cart, items, isPending, isError, hasUnavailable, si
             <span className="text-xs leading-4 text-[#e89b55]">Taxa estimada</span>
           </div>
           <div className="flex items-start justify-between"><span className="text-base font-bold leading-4 text-[#f5f1eb]">Total</span><span className="text-[18px] font-bold leading-4 text-[#e89b55]">{cart?.totalEth ?? '0'} ETH</span></div>
+          </>}
         </div>
         <button type="button" disabled={items.length === 0 || hasUnavailable} onClick={onCheckout} className="h-[60px] w-full cursor-pointer rounded-[40px] bg-[linear-gradient(93.21deg,#d28a4c_-3.96%,rgba(210,138,76,0.8)_121.97%)] text-base font-bold leading-4 text-[#140d0a] transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d99558] disabled:cursor-not-allowed disabled:opacity-50">{signedIn ? 'Finalizar' : 'Conectar e finalizar'}</button>
       </section>

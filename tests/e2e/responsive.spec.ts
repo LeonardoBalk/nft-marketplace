@@ -47,3 +47,21 @@ test('o modal de autenticação cabe na largura do celular', async ({ page }) =>
   expect(box!.width).toBeLessThanOrEqual(390)
   expect(box!.x).toBeGreaterThanOrEqual(0)
 })
+
+for (const viewport of viewports) {
+  test(`checkout autenticado sem overflow em ${viewport.name}px`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height })
+    await page.goto('/nft/golden-beat-207')
+    await page.getByRole('button', { name: /comprar/i }).click()
+    await expect(page).toHaveURL(/\/carrinho$/)
+    await page.goto('/checkout')
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+    await page.locator('#auth-email').fill('test@kurio.test')
+    await page.locator('#auth-password').fill('Kurio@2026')
+    await page.locator('button[form="auth-form"]').click()
+    await expect(page).toHaveURL(/\/checkout$/)
+    await expect(page.getByRole('button', { name: 'Confirmar compra' })).toBeVisible()
+    expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0)
+  })
+}

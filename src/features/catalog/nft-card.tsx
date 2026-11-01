@@ -7,7 +7,7 @@ import type { NftSummary } from './contracts'
 // compact é o card do "mais desta coleção" no desktop: painel de 255px, arte de 212 e textos menores
 type CompactArtworkLayout = 'portrait' | 'square' | 'square-short'
 
-export function NftCard({ nft, featuredRow = false, staggeredMobile = false, compact = false, compactArtworkLayout = 'square' }: { nft: NftSummary; featuredRow?: boolean; staggeredMobile?: boolean; compact?: boolean; compactArtworkLayout?: CompactArtworkLayout }) {
+export function NftCard({ nft, featuredRow = false, staggeredMobile = false, compact = false, compactArtworkLayout = 'square', priority = false }: { nft: NftSummary; featuredRow?: boolean; staggeredMobile?: boolean; compact?: boolean; compactArtworkLayout?: CompactArtworkLayout; priority?: boolean }) {
   const compactPanelLayout = compactArtworkLayout === 'portrait'
     ? 'xl:w-[219px] xl:px-0 xl:pb-2 xl:pt-1'
     : compactArtworkLayout === 'square-short'
@@ -24,7 +24,8 @@ export function NftCard({ nft, featuredRow = false, staggeredMobile = false, com
     <li className={`group/card relative min-w-0 ${staggeredMobile ? 'translate-y-8 sm:translate-y-0' : ''} ${compact ? compactItemWidth : featuredRow ? 'lg:h-[356px]' : 'lg:h-[350px]'}`}>
       <Link className="group flex flex-col gap-2 rounded-[20px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d99558] lg:gap-3 lg:rounded-none" to="/nft/$nftId" params={{ nftId: nft.id }}>
         <div className={`relative flex h-[200px] w-full items-center justify-center rounded-[20px] bg-[linear-gradient(143.28deg,#241612_-12%,#2f1d15_106.59%)] px-1 lg:items-start lg:justify-start lg:gap-[10px] lg:rounded-none lg:bg-[#241612] lg:bg-none ${compact ? `lg:h-[255px] ${compactPanelLayout}` : 'lg:h-[300px] lg:max-w-[258px] lg:pb-7 lg:pt-6'}`}>
-          <img className={`block aspect-square w-full max-w-[168px] shrink-0 rounded-[16px] object-cover transition-transform duration-300 group-hover:scale-[1.04] motion-reduce:transition-none ${compact ? `lg:max-w-none ${compactImageLayout}` : 'lg:max-w-[250px] lg:rounded-[15px]'}`} src={nft.artwork} alt={nft.name} loading="lazy" width="250" height="250" />
+          {/* os primeiros cards são o lcp do catálogo no mobile: sem lazy e com prioridade de rede */}
+          <img className={`block aspect-square w-full max-w-[168px] shrink-0 rounded-[16px] object-cover transition-transform duration-300 group-hover:scale-[1.04] motion-reduce:transition-none ${compact ? `lg:max-w-none ${compactImageLayout}` : 'lg:max-w-[250px] lg:rounded-[15px]'}`} src={nft.artwork} alt={nft.name} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : undefined} width="250" height="250" />
           {/* selo do frame mobile: retângulo reto encostado na borda do card */}
           {nft.rarity === 'RARO' && <span className="absolute left-0 top-4 inline-flex h-8 w-[68px] items-center bg-[#d28a4c] pl-2 text-[13px] font-medium leading-4 text-[#140d0a] lg:hidden">RARO</span>}
         </div>

@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
-import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent, type KeyboardEvent } from 'react'
 import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { NftCard, NftCardSkeleton } from '../features/catalog/nft-card'
@@ -32,6 +32,7 @@ function FilterIcon() {
 }
 
 export function CatalogPage() {
+  const interactive = useSyncExternalStore(() => () => {}, () => true, () => false)
   const locationSearch = useRouterState({ select: (state) => state.location.search })
   // parse memoizado: os efeitos da busca dependem dele e não podem rodar a cada letra
   const search = useMemo(() => catalogSearchSchema.parse(locationSearch), [locationSearch])
@@ -228,13 +229,13 @@ export function CatalogPage() {
                     <div className="absolute left-0 right-0 top-1/2 h-[3px] -translate-y-1/2 bg-[#68422e]" />
                     <div className="absolute top-1/2 h-[3px] -translate-y-1/2 bg-[#d28a4c]" style={{ left: `${(priceRange[0] / 18) * 100}%`, right: `${100 - (priceRange[1] / 18) * 100}%` }} />
                     <label className="sr-only" htmlFor="minimum-price">Preço mínimo em ETH</label>
-                    <input id="minimum-price" type="range" min="0.02" max="18" step="0.01" value={priceRange[0]} onChange={(event) => setPriceRange((current) => [Math.min(Number(event.target.value), current[1] - 0.01), current[1]])} className="price-range absolute inset-0 z-10" />
+                    <input id="minimum-price" type="range" min="0.02" max="18" step="0.01" disabled={!interactive} value={priceRange[0]} onChange={(event) => setPriceRange((current) => [Math.min(Number(event.target.value), current[1] - 0.01), current[1]])} className="price-range absolute inset-0 z-10" />
                     <label className="sr-only" htmlFor="maximum-price">Preço máximo em ETH</label>
-                    <input id="maximum-price" type="range" min="0.02" max="18" step="0.01" value={priceRange[1]} onChange={(event) => setPriceRange((current) => [current[0], Math.max(Number(event.target.value), current[0] + 0.01)])} className="price-range absolute inset-0 z-20" />
+                    <input id="maximum-price" type="range" min="0.02" max="18" step="0.01" disabled={!interactive} value={priceRange[1]} onChange={(event) => setPriceRange((current) => [current[0], Math.max(Number(event.target.value), current[0] + 0.01)])} className="price-range absolute inset-0 z-20" />
                   </div>
                   <p className="text-[15px] leading-5 text-[#f5f1eb]">Preço: {priceRange[0].toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} – {priceRange[1].toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ETH</p>
                   {priceError && <p role="alert" className="text-xs text-[#f1a28a]">{priceError}</p>}
-                  <Button size="sm" className="h-9 w-[92px] rounded-md px-3 text-base font-bold">Aplicar</Button>
+                  <Button size="sm" disabled={!interactive} className="h-9 w-[92px] rounded-md px-3 text-base font-bold">Aplicar</Button>
                 </div>
               </form>
               <section aria-labelledby="network-title" className="flex flex-col gap-3">
@@ -308,7 +309,7 @@ export function CatalogPage() {
               {catalog.isPending && <><p className="sr-only" role="status">Carregando NFTs...</p><ul className="mx-auto grid w-full max-w-[366px] grid-cols-2 gap-x-4 gap-y-6 sm:max-w-none sm:grid-cols-3 sm:gap-x-[34px] sm:gap-y-8 lg:gap-y-[72px]">{Array.from({ length: 9 }, (_, index) => <NftCardSkeleton key={index} staggeredMobile={index % 2 === 1} />)}</ul></>}
               {(catalog.isError || catalogPayloadInvalid) && <div role="alert" className="border border-[#6e4b38] p-6"><p>Não foi possível carregar os NFTs.</p><Button variant="outline" className="mt-4" onClick={() => void catalog.refetch()}>Tentar novamente</Button></div>}
               {catalog.data && !catalogPayloadInvalid && catalogItems.length === 0 && <div className="border border-[#4d3026] p-8 text-center"><p>Nenhum NFT encontrado para esses filtros.</p><Button variant="ghost" className="mt-4" onClick={() => setSearch({ q: '', category: '', network: '', minPrice: '', maxPrice: '', tab: '' })}>Limpar filtros</Button></div>}
-              {catalog.data && !catalogPayloadInvalid && catalogItems.length > 0 && <ul className="mx-auto grid w-full max-w-[366px] grid-cols-2 gap-x-4 gap-y-6 sm:max-w-none sm:grid-cols-3 sm:gap-x-[34px] sm:gap-y-8 lg:gap-y-[72px]">{catalogItems.map((nft, index) => <NftCard nft={nft} featuredRow={index < 3} staggeredMobile={index % 2 === 1} key={nft.id} />)}</ul>}
+              {catalog.data && !catalogPayloadInvalid && catalogItems.length > 0 && <ul className="mx-auto grid w-full max-w-[366px] grid-cols-2 gap-x-4 gap-y-6 sm:max-w-none sm:grid-cols-3 sm:gap-x-[34px] sm:gap-y-8 lg:gap-y-[72px]">{catalogItems.map((nft, index) => <NftCard nft={nft} featuredRow={index < 3} staggeredMobile={index % 2 === 1} priority={index < 2} key={nft.id} />)}</ul>}
             </div>
             </div>
             {catalog.data && !catalogPayloadInvalid && catalogItems.length > 0 && pageCount > 1 && <nav aria-label="Paginação do catálogo" className="mt-10 flex items-center justify-center gap-2 lg:mt-0 lg:justify-end">

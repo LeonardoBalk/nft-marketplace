@@ -7,5 +7,5 @@ export function useMediaQuery(query: string): boolean {
     media.addEventListener('change', notify)
     return () => media.removeEventListener('change', notify)
   }, [query])
-  return useSyncExternalStore(subscribe, () => window.matchMedia(query).matches)
+  return useSyncExternalStore(subscribe, () => window.matchMedia(query).matches, () => false)
 }

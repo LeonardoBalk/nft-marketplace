@@ -2,6 +2,7 @@ import type { ComponentProps } from 'react'
 import { cn } from '@/lib/utils'
 
 export function Input({ className, type, ...props }: ComponentProps<'input'>) {
+  const describedBy = props['aria-describedby'] ?? (props['aria-invalid'] && props.id ? `${props.id}-error` : undefined)
   return (
     <input
       type={type}
@@ -13,6 +14,7 @@ export function Input({ className, type, ...props }: ComponentProps<'input'>) {
         className,
       )}
       {...props}
+      aria-describedby={describedBy}
     />
   )
 }

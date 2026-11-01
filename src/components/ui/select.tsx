@@ -11,6 +11,7 @@ export function SelectValue(props: ComponentProps<typeof SelectPrimitive.Value>)
 }
 
 export function SelectTrigger({ className, children, ...props }: ComponentProps<typeof SelectPrimitive.Trigger>) {
+  const describedBy = props['aria-describedby'] ?? (props['aria-invalid'] && props.id ? `${props.id}-error` : undefined)
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
@@ -21,6 +22,7 @@ export function SelectTrigger({ className, children, ...props }: ComponentProps<
         className,
       )}
       {...props}
+      aria-describedby={describedBy}
     >
       {children}
       <SelectPrimitive.Icon asChild><ChevronDown size={18} strokeWidth={1.5} className="shrink-0 text-[#b39463]" /></SelectPrimitive.Icon>

@@ -18,6 +18,7 @@ export function useCatalogSearchField() {
 
   // a url mudou por fora (voltar, limpar filtros, outro campo): o texto acompanha sem comer o espaço digitado
   useEffect(() => {
+    if (typed.current) return
     setValue((current) => (current.trim() === committed.q ? current : committed.q))
   }, [committed.q])
 

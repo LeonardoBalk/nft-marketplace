@@ -240,6 +240,11 @@ export function getOrder(owner: string, orderId: string): OrderRecord | null {
   return null
 }
 
+export function getOrderByIdempotencyKey(owner: string, key: string): OrderRecord | null {
+  const entry = loadStore().orders[key]
+  return entry?.owner === owner ? normalizeOrder(entry.receipt) : null
+}
+
 export function pendingOrder(owner: string, orderId: string): { order: OrderRecord; settleAt: string; outcome: 'confirmed' | 'declined'; deliverEvents: boolean; duplicateEvents: boolean; staleEvent: boolean } | null {
   const store = loadStore()
   for (const entry of Object.values(store.orders)) {

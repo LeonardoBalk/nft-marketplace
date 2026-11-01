@@ -80,7 +80,8 @@ function JournalCarousel() {
         </div>
       </article>)}
     </div>
-    <div className="mt-5 flex items-center justify-center gap-2 md:hidden">
+    {/* gap-3: 24px entre centros, o mínimo de alvo de toque para pontos de 12px */}
+    <div className="mt-5 flex items-center justify-center gap-3 md:hidden">
       {stories.map((story, index) => <button key={story.title} type="button" aria-label={`Ver artigo ${index + 1} de ${stories.length}`} aria-current={index === active} onClick={() => goTo(index)} className={`size-3 cursor-pointer rounded-full border-[1.3px] border-[#d28a4c] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d99558] ${index === active ? 'bg-[#d28a4c]' : 'bg-transparent hover:bg-[#d28a4c]/40'}`} />)}
     </div>
   </>

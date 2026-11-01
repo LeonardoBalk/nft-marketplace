@@ -33,7 +33,7 @@ export function RelatedCarousel({ nftId, title, className = '' }: { nftId: strin
               ? Array.from({ length: perPage }, (_, index) => <NftCardSkeleton key={index} />)
               : visible.map((item, index) => <NftCard key={item.id} nft={item} compact compactArtworkLayout={index === 0 ? 'portrait' : index < 3 ? 'square' : 'square-short'} />)}
           </ul>
-          {pageCount > 1 && <div className="mt-8 flex items-center justify-center gap-2">
+          {pageCount > 1 && <div className="mt-8 flex items-center justify-center gap-3">
             {Array.from({ length: pageCount }, (_, index) => <button key={index} type="button" aria-label={`Ver página ${index + 1} de ${pageCount}`} aria-current={index === currentPage} onClick={() => setPage(index)} className={`size-3 cursor-pointer rounded-full border-[1.3px] border-[#d28a4c] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d99558] ${index === currentPage ? 'bg-[#d28a4c]' : 'bg-transparent hover:bg-[#d28a4c]/40'}`} />)}
           </div>}
         </>}

@@ -1,0 +1,74 @@
+[
+  {
+    "url": "http://127.0.0.1:5195/",
+    "isRepresentativeRun": false,
+    "htmlPath": "C:\\Users\\Leonardo\\Desktop\\projetos\\nfc\\docs\\lighthouse\\final\\desktop\\-2026_11_01_00_28_57.html",
+    "jsonPath": "C:\\Users\\Leonardo\\Desktop\\projetos\\nfc\\docs\\lighthouse\\final\\desktop\\-2026_11_01_00_28_57.json",
+    "summary": {
+      "performance": 0.99,
+      "accessibility": 0.97,
+      "best-practices": 0.96,
+      "seo": 1
+    }
+  },
+  {
+    "url": "http://127.0.0.1:5195/",
+    "isRepresentativeRun": false,
+    "htmlPath": "C:\\Users\\Leonardo\\Desktop\\projetos\\nfc\\docs\\lighthouse\\final\\desktop\\-2026_11_01_00_29_41.html",
+    "jsonPath": "C:\\Users\\Leonardo\\Desktop\\projetos\\nfc\\docs\\lighthouse\\final\\desktop\\-2026_11_01_00_29_41.json",
+    "summary": {
+      "performance": 1,
+      "accessibility": 0.97,
+      "best-practices": 0.96,
+      "seo": 1
+    }
+  },
+  {
+    "url": "http://127.0.0.1:5195/nft/emerald-ape-042",
+    "isRepresentativeRun": false,
+    "htmlPath": "C:\\Users\\Leonardo\\Desktop\\projetos\\nfc\\docs\\lighthouse\\final\\desktop\\nft_emerald_ape_042-2026_11_01_00_30_14.html",
+    "jsonPath": "C:\\Users\\Leonardo\\Desktop\\projetos\\nfc\\docs\\lighthouse\\final\\desktop\\nft_emerald_ape_042-2026_11_01_00_30_14.json",
+    "summary": {
+      "performance": 1,
+      "accessibility": 1,
+      "best-practices": 0.96,
+      "seo": 1
+    }
+  },
+  {
+    "url": "http://127.0.0.1:5195/nft/emerald-ape-042",
+    "isRepresentativeRun": false,
+    "htmlPath": "C:\\Users\\Leonardo\\Desktop\\projetos\\nfc\\docs\\lighthouse\\final\\desktop\\nft_emerald_ape_042-2026_11_01_00_30_30.html",
+    "jsonPath": "C:\\Users\\Leonardo\\Desktop\\projetos\\nfc\\docs\\lighthouse\\final\\desktop\\nft_emerald_ape_042-2026_11_01_00_30_30.json",
+    "summary": {
+      "performance": 1,
+      "accessibility": 1,
+      "best-practices": 0.96,
+      "seo": 1
+    }
+  },
+  {
+    "url": "http://127.0.0.1:5195/",
+    "isRepresentativeRun": true,
+    "htmlPath": "C:\\Users\\Leonardo\\Desktop\\projetos\\nfc\\docs\\lighthouse\\final\\desktop\\-2026_11_01_00_29_17.html",
+    "jsonPath": "C:\\Users\\Leonardo\\Desktop\\projetos\\nfc\\docs\\lighthouse\\final\\desktop\\-2026_11_01_00_29_17.json",
+    "summary": {
+      "performance": 0.99,
+      "accessibility": 0.97,
+      "best-practices": 0.96,
+      "seo": 1
+    }
+  },
+  {
+    "url": "http://127.0.0.1:5195/nft/emerald-ape-042",
+    "isRepresentativeRun": true,
+    "htmlPath": "C:\\Users\\Leonardo\\Desktop\\projetos\\nfc\\docs\\lighthouse\\final\\desktop\\nft_emerald_ape_042-2026_11_01_00_29_58.html",
+    "jsonPath": "C:\\Users\\Leonardo\\Desktop\\projetos\\nfc\\docs\\lighthouse\\final\\desktop\\nft_emerald_ape_042-2026_11_01_00_29_58.json",
+    "summary": {
+      "performance": 1,
+      "accessibility": 1,
+      "best-practices": 0.96,
+      "seo": 1
+    }
+  }
+]

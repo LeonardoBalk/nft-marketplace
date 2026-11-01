@@ -154,6 +154,7 @@ test('edições distintas persistem e respeitam seus limites no carrinho', async
 
 test('cotação e apresentação preservam 18 casas decimais', async ({ page }) => {
   await page.goto('/nft/emerald-ape-042')
+  await expect(page.locator('html[data-mocks-ready="true"]')).toHaveCount(1)
   await expect(page.getByRole('heading', { name: 'Emerald Ape #042' })).toBeVisible()
   await page.evaluate(async () => {
     await fetch('/api/demo/nfts/emerald-ape-042/price', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ priceEth: '0.000000000000000123' }) })

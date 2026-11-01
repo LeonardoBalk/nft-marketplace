@@ -39,6 +39,7 @@ function SocialButtons() {
 
 export function AuthPage({ mode, redirect, onClose }: { mode: AuthMode; redirect?: string; onClose: () => void }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const openerRef = useRef<HTMLElement | null>(null)
   const router = useRouter()
   const { openAuth } = useAuthModal()
   const login = useLogin()
@@ -56,7 +57,7 @@ export function AuthPage({ mode, redirect, onClose }: { mode: AuthMode; redirect
     const dialog = dialogRef.current
     if (!dialog) return
     // ao fechar, o foco volta para quem abriu o modal (se ele ainda existir na tela)
-    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    if (!openerRef.current && document.activeElement instanceof HTMLElement) openerRef.current = document.activeElement
     if (!dialog.open) dialog.showModal()
     // o dialog nativo não trava a página: sem isso, rolar o cadastro no celular arrasta o início por trás
     const overflow = document.documentElement.style.overflow
@@ -71,7 +72,7 @@ export function AuthPage({ mode, redirect, onClose }: { mode: AuthMode; redirect
       dialog.removeEventListener('cancel', onCancel)
       if (dialog.open) dialog.close()
       document.documentElement.style.overflow = overflow
-      if (opener?.isConnected) opener.focus({ preventScroll: true })
+      if (openerRef.current?.isConnected) openerRef.current.focus({ preventScroll: true })
     }
   }, [close])
 

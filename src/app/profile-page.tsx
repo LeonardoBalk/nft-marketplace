@@ -39,7 +39,7 @@ function PasswordInput({ id, name, label, error }: { id: string; name: string; l
           {visible ? <EyeOff size={20} strokeWidth={1.6} /> : <Eye size={20} strokeWidth={1.6} />}
         </button>
       </div>
-      {error && <p role="alert" className="text-xs text-[#ffb59c]">{error}</p>}
+      {error && <p id={`${id}-error`} role="alert" className="text-xs text-[#ffb59c]">{error}</p>}
     </div>
   )
 }
@@ -120,17 +120,17 @@ function ProfileForm() {
           <div className="flex max-w-[417px] flex-col gap-[10px]">
             <Label htmlFor="displayName" className="h-[29px]">Nome de exibição<span aria-hidden="true" className="text-[22px] leading-7 text-[#f0805f]">*</span></Label>
             <Input id="displayName" name="displayName" defaultValue={data.displayName} maxLength={80} aria-invalid={Boolean(errors.displayName)} />
-            {errors.displayName && <p role="alert" className="text-xs text-[#ffb59c]">{errors.displayName}</p>}
+            {errors.displayName && <p id="displayName-error" role="alert" className="text-xs text-[#ffb59c]">{errors.displayName}</p>}
           </div>
           <div className="flex max-w-[417px] flex-col gap-[10px]">
             <Label htmlFor="username" className="h-[29px]">Nome de usuário<span aria-hidden="true" className="text-[22px] leading-7 text-[#f0805f]">*</span></Label>
             <Input id="username" name="username" defaultValue={data.username} maxLength={80} aria-invalid={Boolean(errors.username)} />
-            {errors.username && <p role="alert" className="text-xs text-[#ffb59c]">{errors.username}</p>}
+            {errors.username && <p id="username-error" role="alert" className="text-xs text-[#ffb59c]">{errors.username}</p>}
           </div>
           <div className="flex max-w-[417px] flex-col gap-[10px]">
             <Label htmlFor="profile-email" className="h-[29px]">E-mail<span aria-hidden="true" className="text-[22px] leading-7 text-[#f0805f]">*</span></Label>
             <Input id="profile-email" name="email" type="email" defaultValue={data.email} aria-invalid={Boolean(errors.email)} />
-            {errors.email && <p role="alert" className="text-xs text-[#ffb59c]">{errors.email}</p>}
+            {errors.email && <p id="profile-email-error" role="alert" className="text-xs text-[#ffb59c]">{errors.email}</p>}
           </div>
           <div className="flex max-w-[417px] flex-col gap-[10px]">
             <Label htmlFor="ensName" className="h-[29px]">Nome ENS<span aria-hidden="true" className="text-[22px] leading-7 text-[#f0805f]">*</span></Label>
@@ -147,7 +147,7 @@ function ProfileForm() {
           <div className="flex max-w-[417px] flex-col gap-[10px]">
             <Label htmlFor="walletNickname" className="h-[29px]">Apelido da carteira<span aria-hidden="true" className="text-[22px] leading-7 text-[#f0805f]">*</span></Label>
             <Input id="walletNickname" name="walletNickname" defaultValue={data.walletNickname} maxLength={60} aria-invalid={Boolean(errors.walletNickname)} />
-            {errors.walletNickname && <p role="alert" className="text-xs text-[#ffb59c]">{errors.walletNickname}</p>}
+            {errors.walletNickname && <p id="walletNickname-error" role="alert" className="text-xs text-[#ffb59c]">{errors.walletNickname}</p>}
           </div>
           <div className="flex flex-col gap-[10px]">
             <span className="flex h-[29px] items-center text-[15px] leading-4">Avatar</span>

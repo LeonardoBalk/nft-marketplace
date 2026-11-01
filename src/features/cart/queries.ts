@@ -1,5 +1,6 @@
 import type { NftEdition } from '../catalog/contracts'
 import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { isAxiosError } from 'axios'
 import { api } from '../../shared/api/client'
 import { rotateGuestId } from '../auth/session'
 import type { CartSummary, CheckoutRequest, OrderRecord } from './contracts'
@@ -82,8 +83,17 @@ export function useCheckout() {
   return useMutation({
     // chave vem de fora e sobrevive à retentativa: clique repetido não duplica pedido
     mutationFn: async ({ input, idempotencyKey, expectedQuote, connectionId }: { input: CheckoutRequest; idempotencyKey: string; expectedQuote: string; connectionId: string }) => {
-      const response = await api.post<OrderRecord>('/orders', input, { headers: { 'Idempotency-Key': idempotencyKey, 'X-Expected-Quote': expectedQuote, 'X-Wallet-Connection': connectionId } })
-      return response.data
+      const request = () => api.post<OrderRecord>('/orders', input, { headers: { 'Idempotency-Key': idempotencyKey, 'X-Expected-Quote': expectedQuote, 'X-Wallet-Connection': connectionId } })
+      try {
+        return (await request()).data
+      } catch (error) {
+        // O servidor pode ter criado o pedido antes da resposta se perder. A mesma
+        // chave devolve o pedido original e nunca inicia uma segunda compra.
+        if (isAxiosError(error) && (error.response?.status === 504 || !error.response)) {
+          return (await request()).data
+        }
+        throw error
+      }
     },
     // o pedido pendente entra no cache; o status final chega por realtime e pelo polling
     onSuccess: (order) => {
@@ -94,6 +104,11 @@ export function useCheckout() {
 }
 
 export const orderKey = (orderId: string) => ['orders', orderId] as const
+
+export async function recoverOrder(key: string): Promise<OrderRecord> {
+  const { data } = await api.get<OrderRecord>('/orders/recover', { headers: { 'Idempotency-Key': key } })
+  return data
+}
 
 // a confirmação é uma página: refresh ou link direto recuperam o pedido pela api
 export function orderQuery(orderId: string) {
@@ -110,13 +125,9 @@ export function orderQuery(orderId: string) {
   })
 }
 
-export async function mergeGuestCart(): Promise<CartSummary | null> {
-  try {
-    const response = await api.post<CartSummary>('/cart/merge')
-    // limpar identidade de visitante apos mesclar carrinho
-    rotateGuestId()
-    return response.data
-  } catch {
-    return null
-  }
+export async function mergeGuestCart(): Promise<CartSummary> {
+  const response = await api.post<CartSummary>('/cart/merge')
+  // Preserve a identidade de visitante em caso de falha, para permitir retomar.
+  rotateGuestId()
+  return response.data
 }

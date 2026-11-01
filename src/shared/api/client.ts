@@ -1,12 +1,14 @@
 import axios from 'axios'
 import { clearAccessToken, getAccessToken, getGuestId } from '../../features/auth/session'
+import { whenMocksReady } from './mocks-ready'
 
 export const api = axios.create({
   baseURL: '/api',
   timeout: 10_000,
 })
 
-api.interceptors.request.use((config) => {
+api.interceptors.request.use(async (config) => {
+  await whenMocksReady()
   const token = getAccessToken()
   if (token) config.headers.Authorization = `Bearer ${token}`
   config.headers['X-Guest-Id'] = getGuestId()

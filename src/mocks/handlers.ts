@@ -7,7 +7,7 @@ import { deleteWallet, readProfile, readWallets, resetAccountStore, writeAvatar,
 import { addFavorite, readFavorites, removeFavorite, resetFavoritesStore } from './favorites-store'
 import { catalogSearchSchema, editions, type NftEdition } from '../features/catalog/contracts'
 import { cartItemRequestSchema, cartQuantitySchema, checkoutSchema, couponRequestSchema, walletConnectionRequestSchema, type CartSummary } from '../features/cart/contracts'
-import { addCartItem, applyCartCoupon, connectMockWallet, createOrder, finishOrder, getOrder, mergeGuestCart, pendingOrder, readCart, removeCartCoupon, removeCartItem, resetCommerceStore, resolveCartOwner, updateCartItem } from './commerce-store'
+import { addCartItem, applyCartCoupon, connectMockWallet, createOrder, finishOrder, getOrder, getOrderByIdempotencyKey, mergeGuestCart, pendingOrder, readCart, removeCartCoupon, removeCartItem, resetCommerceStore, resolveCartOwner, updateCartItem } from './commerce-store'
 import { changeNftAvailability, changeNftPrice, consumeNftEdition, getNft, getRelatedNfts, listNfts, resetMockCatalog } from './catalog'
 import { clearDemoScenarioStorage, getDemoScenario, resetDemoScenario, takeMockNetworkBehavior, updateDemoScenario } from './demo-scenario'
 
@@ -346,6 +346,14 @@ export const handlers = [
     }
     // repetir a mesma tentativa devolve o pedido original, sem cobrar de novo
     return HttpResponse.json(result.order, { status: result.status === 'created' ? 202 : 200 })
+  }),
+  http.get('/api/orders/recover', async ({ request }) => {
+    const user = await authenticateMockRequest(request)
+    if (!user) return HttpResponse.json({ code: 'SESSION_INVALID', message: 'Entre para ver seus pedidos.' }, { status: 401 })
+    const owner = resolveCartOwner(user, request)
+    const key = request.headers.get('idempotency-key') ?? ''
+    const order = owner && key ? getOrderByIdempotencyKey(owner, key) : null
+    return order ? HttpResponse.json(order) : HttpResponse.json({ code: 'ORDER_NOT_FOUND', message: 'Pedido não encontrado.' }, { status: 404 })
   }),
   http.get('/api/orders/:orderId', async ({ params, request }) => {
     const user = await authenticateMockRequest(request)
